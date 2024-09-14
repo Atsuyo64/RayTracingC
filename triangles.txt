@@ -1,0 +1,7 @@
+Format: number of triangles, and then for each triangle: position (AKA three vectors), color, emission strength and smoothness
+/!\ normales will be calculated counterclockwise
+everything expect numbers, dots, plus or minus and linebreak will be condidered as spaces
+
+2
+{{-5 -5 5},{-5 5 5},{5 5 5}, {{1 0 0},1,0}}
+{{5 5 5},{5,-5,5},{-5 -5 5}, {{0 1 0},1,0}}
