@@ -238,7 +238,7 @@ vec3 calcColor(Ray ray,int maxBounce)
       //printf("[Bounce %i]\n\tRay:\n\t\tPos %f %f %f\n\t\tDir %f %f %f\n\tHit %s\n\t\tDist %f\n\t\tPos %f %f %f\n\t\tNormal %f %f %f\n\t\tColor %f %f %f %f\n\tPrev rayColor %f %f %f\n\tPrev light %f %f %f\n\n\n",i,ray.pos.x,ray.pos.y,ray.pos.z,ray.dir.x,ray.dir.y,ray.dir.z,hitInfo.didHit?"TRUE":"FALSE",hitInfo.dst,hitInfo.hitPoint.x,hitInfo.hitPoint.y,hitInfo.hitPoint.z,hitInfo.normal.x,hitInfo.normal.y,hitInfo.normal.z,hitInfo.mat.color.x,hitInfo.mat.color.y,hitInfo.mat.color.z,hitInfo.mat.emissionStrength,rayColor.x,rayColor.y,rayColor.z,incomingLight.x,incomingLight.y,incomingLight.z);
       if(hitInfo.didHit)
       {
-         ray.dir = RandomHemisphereDirection(hitInfo.normal);
+         ray.dir = normalized(plus(hitInfo.normal,RandomDiretion()));//Cosine distribution //RandomHemisphereDirection(hitInfo.normal);
          ray.pos = plus(hitInfo.hitPoint,times(ray.dir,.01));
 
          vec3 emittedLight = times(hitInfo.mat.color,hitInfo.mat.emissionStrength);
