@@ -50,6 +50,7 @@ typedef struct Material
 {
    vec3 color;
    float emissionStrength;
+   float smoothness;
 } Material;
 
 typedef struct Sphere
@@ -74,20 +75,20 @@ typedef struct Ray
    vec3 dir;
 } Ray;
                                  //pos,radius,{color,emission}
-static Sphere const spheres[] = {{{2,-.8,2},1,{{1,1,1},0}},
-                                 {{.51,-.3,2},.5,{{1,0,0},0}},
-                                 {{-1.5,.05,2},.4,{{0,1,0},0}},
-                                 {{-2.2,.1,2},.3,{{.4,.4,1},0}},
-                                 {{0,30.1,3},30,{{0.61,0,1},0}},
+static Sphere const spheres[] = {{{2,-.8,2},1,{{1,1,1},0,1}},
+                                 {{.51,-.3,2},.5,{{1,0,0},0,.75}},
+                                 {{-1.5,.05,2},.4,{{0,1,0},0,.5}},
+                                 {{-2.2,.1,2},.3,{{.4,.4,1},0,.25}},
+                                 {{0,30.1,3},30,{{0.61,0,1},0,.75}},
                                  //{{-15,-15,10},15,{{1,.85,.85},1}},
                                  };
                                  //{{{0,0.7071068,4},1,{{1,1,1},1}},{{0,0,2},1,{{1,0,0},1}}};//debug
 static const int sphereCount = sizeof(spheres)/sizeof(Sphere);
 
-static int const w = 128*4;//width
-static int const h = 128*4;//height
-static int const accumulationCount = 100*10;//1000 = ok
-static int const maxBounce = 4+2;
+static int const w = 128*2;//width
+static int const h = 128*2;//height
+static int const accumulationCount = 100*2;//1000 = ok
+static int const maxBounce = 10;
 static vec3 const sunDirection = {-30,-85,100};
 static vec3 const SkyColorHorizon = {1,1,1};
 static vec3 const SkyColorZenith = {0.263,0.969,0.871};//{.5,.5,1};
@@ -100,6 +101,8 @@ static vec3 normalizedSunDirection;
 static int const halfW = w/2;
 static int const halfH = h/2;
 static unsigned int rngState;
+static vec3 WHITE = {1,1,1};
+static vec3 BLACK = {0,0,0};
 
 float dot(vec3 a,vec3 b)
 {
@@ -139,6 +142,11 @@ vec3 timesVec3(vec3 a,vec3 b)
 {
    vec3 res={a.x*b.x,a.y*b.y,a.z*b.z};
    return res;
+}
+
+vec3 reflect(vec3 dir,vec3 normal)
+{
+   return minus(dir,times(normal,2.*dot(dir,normal)));//dir - 2. * dot(dir,normal) * normal;
 }
 
 vec3 lerp(vec3 inf,vec3 sup,float t)
@@ -192,16 +200,16 @@ HitInfo raySphere(Ray ray,vec3 sphereCentre,float radius)
 
    float delta = b*b-c;
 
-   if(delta<0)
+   if(delta<=0)
    {
       HitInfo res = {0};
       return res;
    }
    delta = sqrt(delta);
    float dst = -b-delta;
-   if(dst<0)
+   if(dst<=0)
       dst=-b+delta;
-   if(dst<0)
+   if(dst<=0)
    {
       HitInfo res = {0};
       return res;
@@ -226,20 +234,49 @@ HitInfo CalculateRayCollision(Ray ray)
    return closest;
 }
 
-vec3 calcColor(Ray ray,int maxBounce)
+vec3 calcDebugColor(Ray ray,int maxBounce)
 {
-   //Color skyColor={0x77,0xB5,0xFE};
-   vec3 incomingLight = {0,0,0};
-   vec3 rayColor = {1,1,1};
-
-   for(int i=0;i<maxBounce;++i)
+   int i;
+   for(i=0;i<maxBounce;++i)
    {
       HitInfo hitInfo = CalculateRayCollision(ray);
       //printf("[Bounce %i]\n\tRay:\n\t\tPos %f %f %f\n\t\tDir %f %f %f\n\tHit %s\n\t\tDist %f\n\t\tPos %f %f %f\n\t\tNormal %f %f %f\n\t\tColor %f %f %f %f\n\tPrev rayColor %f %f %f\n\tPrev light %f %f %f\n\n\n",i,ray.pos.x,ray.pos.y,ray.pos.z,ray.dir.x,ray.dir.y,ray.dir.z,hitInfo.didHit?"TRUE":"FALSE",hitInfo.dst,hitInfo.hitPoint.x,hitInfo.hitPoint.y,hitInfo.hitPoint.z,hitInfo.normal.x,hitInfo.normal.y,hitInfo.normal.z,hitInfo.mat.color.x,hitInfo.mat.color.y,hitInfo.mat.color.z,hitInfo.mat.emissionStrength,rayColor.x,rayColor.y,rayColor.z,incomingLight.x,incomingLight.y,incomingLight.z);
       if(hitInfo.didHit)
       {
-         ray.dir = normalized(plus(hitInfo.normal,RandomDiretion()));//Cosine distribution //RandomHemisphereDirection(hitInfo.normal);
-         ray.pos = plus(hitInfo.hitPoint,times(ray.dir,.01));
+         vec3 diffuseDir = normalized(plus(hitInfo.normal,RandomDiretion()));//Cosine distribution //RandomHemisphereDirection(hitInfo.normal);
+         vec3 specularDir= reflect(ray.dir,hitInfo.normal);
+         ray.dir = lerp(diffuseDir,specularDir,hitInfo.mat.smoothness);
+         ray.pos = plus(hitInfo.hitPoint,times(ray.dir,.001));
+
+         //vec3 emittedLight = times(hitInfo.mat.color,hitInfo.mat.emissionStrength);
+         //incomingLight = plus(incomingLight,timesVec3(emittedLight,rayColor));
+         //rayColor = timesVec3(rayColor,hitInfo.mat.color);
+      }
+      else
+      {
+         //incomingLight = plus(incomingLight,timesVec3(getEnvironmentLight(ray),rayColor));
+         break;
+      }
+   }
+   return lerp(BLACK,WHITE,i/(float)maxBounce);//incomingLight;//vec3ToColor(incomingLight);
+}
+
+vec3 calcColor(Ray ray,int maxBounce)
+{
+   //Color skyColor={0x77,0xB5,0xFE};
+   vec3 incomingLight = {0,0,0};
+   vec3 rayColor = {1,1,1};
+   int i;
+   for(i=0;i<maxBounce;++i)
+   {
+      HitInfo hitInfo = CalculateRayCollision(ray);
+      //printf("[Bounce %i]\n\tRay:\n\t\tPos %f %f %f\n\t\tDir %f %f %f\n\tHit %s\n\t\tDist %f\n\t\tPos %f %f %f\n\t\tNormal %f %f %f\n\t\tColor %f %f %f %f\n\tPrev rayColor %f %f %f\n\tPrev light %f %f %f\n\n\n",i,ray.pos.x,ray.pos.y,ray.pos.z,ray.dir.x,ray.dir.y,ray.dir.z,hitInfo.didHit?"TRUE":"FALSE",hitInfo.dst,hitInfo.hitPoint.x,hitInfo.hitPoint.y,hitInfo.hitPoint.z,hitInfo.normal.x,hitInfo.normal.y,hitInfo.normal.z,hitInfo.mat.color.x,hitInfo.mat.color.y,hitInfo.mat.color.z,hitInfo.mat.emissionStrength,rayColor.x,rayColor.y,rayColor.z,incomingLight.x,incomingLight.y,incomingLight.z);
+      if(hitInfo.didHit)
+      {
+         vec3 diffuseDir = normalized(plus(hitInfo.normal,RandomDiretion()));//Cosine distribution //RandomHemisphereDirection(hitInfo.normal);
+         vec3 specularDir= reflect(ray.dir,hitInfo.normal);
+         ray.dir = lerp(diffuseDir,specularDir,hitInfo.mat.smoothness);
+         ray.pos = plus(hitInfo.hitPoint,times(ray.dir,.001));
 
          vec3 emittedLight = times(hitInfo.mat.color,hitInfo.mat.emissionStrength);
          incomingLight = plus(incomingLight,timesVec3(emittedLight,rayColor));
@@ -270,7 +307,7 @@ int main()
    {
       for(int x=0;x<w;++x)
       {
-         vec3 dir={(x-halfW)/(float)halfH,(y-halfH)/(double)halfH,1};//aspect ratio respected
+         vec3 dir={(x-halfW)/(float)halfH,(y-halfH)/(float)halfH,1};//aspect ratio respected
          //dir = minus(dir,origin);//fixed camera dir
          dir = normalized(dir);
          Ray ray = {origin,dir};
