@@ -4,3 +4,4 @@ out.bmp
 *.o
 *.parsed
 build/
+*.h.gch
