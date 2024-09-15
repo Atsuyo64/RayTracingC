@@ -3,3 +3,4 @@ out.bmp
 *.out
 *.o
 *.parsed
+build/

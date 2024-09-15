@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "h_hostfile": "plaintext",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "stbi_image_write.h": "c",
+        "cstdlib": "cpp",
+        "raytracing.h": "c",
+        "stdio.h": "c",
+        "math.h": "c"
+    }
+}
