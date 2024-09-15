@@ -23,13 +23,13 @@ main_d.o: main.c
 
 # OPTI BINS
 
-moremath_o.o: moremath.c moremath.h
+moremath.o: moremath.c moremath.h
 	$(CC) $(CFLAGS_OPTI) -c moremath.c moremath.h
 
-raytracing_o.o: raytracing.c raytracing.h
+raytracing.o: raytracing.c raytracing.h
 	$(CC) $(CFLAGS_OPTI) -c raytracing.c raytracing.h
 
-main_o.o: main.c
+main.o: main.c
 	$(CC) $(CFLAGS_OPTI) -c main.c
 
 
@@ -38,7 +38,7 @@ main_o.o: main.c
 debug: moremath_d.o raytracing_d.o main_d.o
 	$(CC) $(CFLAGS_DBG) moremath.o raytracing.o main.o -o rayt.out
 
-opti: moremath_o.o raytracing_o.o main_o.o
+opti: moremath.o raytracing.o main.o
 	$(CC) $(CFLAGS_OPTI) moremath.o raytracing.o main.o -o rayt.out
 
 
