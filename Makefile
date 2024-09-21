@@ -42,6 +42,11 @@ opti: moremath.o raytracing.o main.o
 	$(CC) $(CFLAGS_OPTI) moremath.o raytracing.o main.o -o rayt.out
 
 
+# OBJ Loader & Tester
+
+obj: objloader.c objtest.c
+	$(CC) $(CFLAGS_OPTI) objloader.c objtest.c -o obj.out
+
 # CLEAN
 
 clean:
