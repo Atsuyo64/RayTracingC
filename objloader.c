@@ -18,10 +18,10 @@
 /**
  * Object loader minimal lib
  *
- * UNSUPPORTED: Textures, space vertices (vp), f sqares, Line elements, smooth shading, [w] coordinates
+ * UNSUPPORTED: Textures, space vertices (vp), vertex normals (vn) & vertex textures (vn), f sqares (x/x/x/x), Line elements, smooth shading (s), [w] coordinates (in v)
  **/
 
-char stage[7] = "xxxxxxx";
+char stage[7] = "....xx.";
 enum reading_stage
 {
     RS_INITIAL,
@@ -32,6 +32,99 @@ enum reading_stage
     RS_VERTEXT,
     RS_FACE
 };
+
+typedef struct ObjVert
+{
+    float x;
+    float y;
+    float z;
+} ObjVert;
+
+typedef struct ObjFace
+{
+    unsigned int x;
+    unsigned int y;
+    unsigned int z;
+} ObjFace;
+
+ObjVert *globalVerts;
+ObjFace *globalFaces;
+int maxVerticesPerObject = 0;
+int maxFacesPerObject = 0;
+
+/**
+ * Allocate Memory
+ * @param filename
+ *
+ */
+int allocateMemory(const char *filename)
+{
+#if PRINT_LOADING >= 2
+    printf("Allocating memory...");
+    fflush(stdout);
+#endif
+    maxVerticesPerObject = 0;
+    maxFacesPerObject = 0;
+
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    fp = fopen(filename, "r");
+    if (fp == NULL)
+    {
+#if PRINT_LOADING > 0
+        printf("ERROR: could not evaluate memory allocation.\n");
+#endif
+        exit(1);
+    }
+    int totalObj = 0;
+    int totalVert = 0;
+    int totalFaces = 0;
+    int vertPerObject = 0;
+    int facesPerObject = 0;
+    while ((read = getline(&line, &len, fp)) != -1)
+    {
+        if (read == 1 || line[0] == '#')
+            continue;
+        if (strncmp(line, "v ", 2) == 0)
+            vertPerObject++;
+        else if (strncmp(line, "f ", 2) == 0)
+            facesPerObject++;
+        else if (strncmp(line, "o ", 2) == 0)
+        {
+            totalObj++;
+            if (vertPerObject > maxVerticesPerObject)
+                maxVerticesPerObject = vertPerObject;
+            if (facesPerObject > maxFacesPerObject)
+                maxFacesPerObject = facesPerObject;
+            totalVert += vertPerObject;
+            totalFaces += facesPerObject;
+            facesPerObject = 0;
+            vertPerObject = 0;
+        }
+    }
+    if (vertPerObject > maxVerticesPerObject)
+        maxVerticesPerObject = vertPerObject;
+    if (facesPerObject > maxFacesPerObject)
+        maxFacesPerObject = facesPerObject;
+    totalVert += vertPerObject;
+    totalFaces += facesPerObject;
+
+    fclose(fp);
+    if (line)
+        free(line);
+
+    // allocating max+1 because OBJ start indexing at 1
+    globalVerts = malloc((maxVerticesPerObject+1)*sizeof(ObjVert));
+    globalFaces = malloc((maxFacesPerObject+1)*sizeof(ObjFace));
+    
+#if PRINT_LOADING >= 2
+    printf("\rAllocated memory: objects=%d maxVertices=%d maxFaces=%d (total: v=%d f=%d)\n", totalObj, maxVerticesPerObject, maxFacesPerObject, totalVert, totalFaces);
+#endif
+    return 0;
+}
 
 /**
  * loadMtl function
@@ -46,10 +139,6 @@ int loadMtl(const char *filename)
     size_t len = 0;
     ssize_t read;
     int ret;
-
-    enum reading_stage oldState = RS_INITIAL;
-    enum reading_stage newState = RS_INITIAL;
-    stage[newState] = '~';
 
 #if PRINT_LOADING > 1
     printf("Loading material %s...\n", filename);
@@ -70,6 +159,8 @@ int loadMtl(const char *filename)
         printf("Retrieved line of length %zu:\n", read);
         printf("%s", line);
 #endif
+        if (read == 1 || line[0] == '#')
+            continue;
     }
 
     fclose(fp);
@@ -107,6 +198,8 @@ int loadObj(const char *filename)
     fp = fopen(filename, "r");
     if (fp == NULL)
         return 1;
+
+    allocateMemory(filename);
 
     while ((read = getline(&line, &len, fp)) != -1)
     {
@@ -171,5 +264,7 @@ int loadObj(const char *filename)
 #if PRINT_LOADING >= 2
     printf("\nFile reading ended.\n");
 #endif
-    return 1;
+    free(globalVerts);
+    free(globalFaces);
+    return 0;
 }
