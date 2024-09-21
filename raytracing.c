@@ -147,6 +147,7 @@ HitInfo raySphere(Ray ray, vec3 sphereCentre, float radius)
 HitInfo rayTriangle(Ray ray, Triangle t)
 {
    HitInfo hitInfo = {0};
+   if(dot(ray.dir,t.normal)>=0) return hitInfo;
    vec3 AB = minus(t.posB, t.posA);
    vec3 AC = minus(t.posC, t.posA);
    vec3 h = cross(ray.dir, AC);
@@ -237,6 +238,11 @@ vec3 calcColor(Ray ray, int maxBounce)
          vec3 emittedLight = times(hitInfo.mat.color, hitInfo.mat.emissionStrength);
          incomingLight = plus(incomingLight, timesVec3(emittedLight, rayColor));
          rayColor = timesVec3(rayColor, hitInfo.mat.color);
+         
+         //optimisation that statistically does not change the result
+         float p = fmax(fmax(rayColor.x,rayColor.y),rayColor.z);
+         if(p<RandomValue())break;
+         rayColor = times(rayColor,1.0/p);
       }
       else
       {

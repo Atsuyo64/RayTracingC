@@ -21,7 +21,7 @@ static int triangleCount = 0;
 
 static int const w = 128*1;//width
 static int const h = 128*1;//height
-static int const accumulationCount = 100*9;//1000 = ok
+static int const accumulationCount = 100*2;//1000 = ok
 static int const maxBounce = 20;
 static vec3 const sunDirection = {-30,-85,100};
 static vec3 const SkyColorHorizon = {1,1,1};

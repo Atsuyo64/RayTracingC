@@ -62,7 +62,7 @@ int main(int argc, char const *argv[])
    }
    // printAllTriangles();
    Color image[w * h];
-   vec3 origin = {0, -1, -1};
+   vec3 origin = {0, 0, -15};
    /*
    vec3 dir={0,0,1};
    dir=normalized(dir);
@@ -74,6 +74,7 @@ int main(int argc, char const *argv[])
 #if defined(_WIN32) || (MULTITHREADED == 0)
    for (int y = 0; y < h; ++y)
    {
+      if(y%10==0)printf("[%4i/%i] Processing...\n",y,h);
       for (int x = 0; x < w; ++x)
       {
          vec3 dir = {(x - halfW) / (float)halfH, (y - halfH) / (float)halfH, 1}; // aspect ratio respected
