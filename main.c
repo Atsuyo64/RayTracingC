@@ -7,18 +7,18 @@
 #include "raytracing.h"
 #include "scene.h"
 
-#define MULTITHREADED 0
-#if defined(_WIN32) || (MULTITHREADED == 0)
-#include <pthread.h>
-#define NUMBER_OF_THREADS 12
-#endif
-
 typedef struct threadArgs
 {
    int thID;
    vec3 *origin;
    Color *image;
 } threadArgs;
+
+
+#define MULTITHREADED 1
+#if !defined(_WIN32) && (MULTITHREADED == 1)
+#include <pthread.h>
+#define NUMBER_OF_THREADS 12
 
 void *rowThread(void *thArgsPtr)
 {
@@ -40,12 +40,26 @@ void *rowThread(void *thArgsPtr)
    }
    free(thArgs);
 }
+#endif
 
-int main()
+int main(int argc, char const *argv[])
 {
    normalizedSunDirection = normalized(sunDirection);
-   printf("Parsing triangles...\n");
-   parseTriangleFile("triangles.txt");
+   if (argc == 1)
+   {
+      printf("Parsing triangles...\n");
+      parseTriangleFile("triangles.txt");
+   }
+   else if (strcmp(argv[1], "--help") == 0)
+   {
+      printf("%s takes as (optional) param an obj file.\n");
+      exit(0);
+   }
+   else
+   {
+      printf("Loading obj...\n");
+      loadOBJTriangles(argv[1]);
+   }
    // printAllTriangles();
    Color image[w * h];
    vec3 origin = {0, -1, -1};
