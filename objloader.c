@@ -51,6 +51,7 @@ ObjVert *globalVerts;
 ObjFace *globalFaces;
 int maxVerticesPerObject = 0;
 int maxFacesPerObject = 0;
+int totalFaces = 0;
 
 /**
  * Allocate Memory
@@ -81,7 +82,7 @@ int allocateMemory(const char *filename)
     }
     int totalObj = 0;
     int totalVert = 0;
-    int totalFaces = 0;
+    totalFaces = 0;
     int vertPerObject = 0;
     int facesPerObject = 0;
     while ((read = getline(&line, &len, fp)) != -1)
@@ -171,11 +172,14 @@ int loadMtl(const char *filename)
 
 /**
  * loadObj function
- * @param filename
+ * @param filename the name of the.obj file
+ * @param triangles a null pointer on which will be allocated array of triangles
+ * 
+ * TODO: Think to free() your triangles when they are unused /!\
  *
  * @return 0 if success, 1 if file not found
  */
-int loadObj(const char *filename)
+int loadObj(const char *filename, OBJTriangle **triangles)
 {
     char filenamemod[512];
     strcpy(filenamemod, filename);
@@ -200,6 +204,8 @@ int loadObj(const char *filename)
         return 1;
 
     allocateMemory(filename);
+    // list allocated
+    *triangles = malloc((totalFaces)*sizeof(OBJTriangle));
 
     while ((read = getline(&line, &len, fp)) != -1)
     {
