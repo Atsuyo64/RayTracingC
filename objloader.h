@@ -10,7 +10,7 @@ typedef struct OBJTriangle
     float normal[3];
     float color[3];
     float emission;
-    float roughness;
+    float smoothness;
 } OBJTriangle;
 
 /**

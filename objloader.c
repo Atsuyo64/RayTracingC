@@ -18,7 +18,7 @@
 /**
  * Object loader minimal lib
  *
- * UNSUPPORTED: Textures, space vertices (vp), vertex normals (vn) & vertex textures (vn), f sqares (x/x/x/x), Line elements, smooth shading (s), [w] coordinates (in v)
+ * UNSUPPORTED: Textures, space vertices (vp) & vertex textures (vn), f sqares (x/x/x/x), Line elements, smooth shading (s), [w] coordinates (in v)
  **/
 
 char stage[7] = "....xx.";
@@ -40,16 +40,11 @@ typedef struct ObjVert
     float z;
 } ObjVert;
 
-typedef struct ObjFace
-{
-    unsigned int x;
-    unsigned int y;
-    unsigned int z;
-} ObjFace;
-
 ObjVert *globalVerts;
-ObjFace *globalFaces;
+ObjVert *globalNorms;
+
 int maxVerticesPerObject = 0;
+int maxNormsPerObject = 0;
 int maxFacesPerObject = 0;
 int totalFaces = 0;
 
@@ -82,8 +77,10 @@ int allocateMemory(const char *filename)
     }
     int totalObj = 0;
     int totalVert = 0;
+    int totalNorm = 0;
     totalFaces = 0;
     int vertPerObject = 0;
+    int normsPerObject = 0;
     int facesPerObject = 0;
     while ((read = getline(&line, &len, fp)) != -1)
     {
@@ -91,6 +88,8 @@ int allocateMemory(const char *filename)
             continue;
         if (strncmp(line, "v ", 2) == 0)
             vertPerObject++;
+        if (strncmp(line, "vn ", 3) == 0)
+            normsPerObject++;
         else if (strncmp(line, "f ", 2) == 0)
             facesPerObject++;
         else if (strncmp(line, "o ", 2) == 0)
@@ -98,19 +97,26 @@ int allocateMemory(const char *filename)
             totalObj++;
             if (vertPerObject > maxVerticesPerObject)
                 maxVerticesPerObject = vertPerObject;
+            if (normsPerObject > maxNormsPerObject)
+                maxNormsPerObject = normsPerObject;
             if (facesPerObject > maxFacesPerObject)
                 maxFacesPerObject = facesPerObject;
             totalVert += vertPerObject;
+            totalNorm += normsPerObject;
             totalFaces += facesPerObject;
             facesPerObject = 0;
+            normsPerObject = 0;
             vertPerObject = 0;
         }
     }
     if (vertPerObject > maxVerticesPerObject)
         maxVerticesPerObject = vertPerObject;
+    if (normsPerObject > maxNormsPerObject)
+        maxNormsPerObject = normsPerObject;
     if (facesPerObject > maxFacesPerObject)
         maxFacesPerObject = facesPerObject;
     totalVert += vertPerObject;
+    totalNorm += normsPerObject;
     totalFaces += facesPerObject;
 
     fclose(fp);
@@ -118,11 +124,11 @@ int allocateMemory(const char *filename)
         free(line);
 
     // allocating max+1 because OBJ start indexing at 1
-    globalVerts = malloc((maxVerticesPerObject+1)*sizeof(ObjVert));
-    globalFaces = malloc((maxFacesPerObject+1)*sizeof(ObjFace));
-    
+    globalVerts = malloc((maxVerticesPerObject + 1) * sizeof(ObjVert));
+    globalNorms = malloc((maxNormsPerObject + 1) * sizeof(ObjVert));
+
 #if PRINT_LOADING >= 2
-    printf("\rAllocated memory: objects=%d maxVertices=%d maxFaces=%d (total: v=%d f=%d)\n", totalObj, maxVerticesPerObject, maxFacesPerObject, totalVert, totalFaces);
+    printf("\rAllocated memory: objects=%d maxVertices=%d maxNormals=%d maxFaces=%d (total: v=%d n=%d f=%d)\n", totalObj, maxVerticesPerObject, maxNormsPerObject, maxFacesPerObject, totalVert, totalNorm, totalFaces);
 #endif
     return 0;
 }
@@ -175,7 +181,7 @@ int loadMtl(const char *filename)
  * @param filename the name of the.obj file
  * @param triangles a null pointer on which will be allocated array of triangles
  * @param count of triangle stored in triangles
- * 
+ *
  * TODO: Think to free() your triangles when they are unused /!\
  *
  * @return 0 if success, 1 if file not found
@@ -192,6 +198,7 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
     size_t len = 0;
     ssize_t read;
     int ret;
+    int lineNb = 0;
 
     enum reading_stage oldState = RS_INITIAL;
     enum reading_stage newState = RS_INITIAL;
@@ -206,11 +213,16 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
 
     allocateMemory(filename);
     // list allocated
-    *triangles = malloc((totalFaces)*sizeof(OBJTriangle));
+    *triangles = malloc((totalFaces) * sizeof(OBJTriangle));
     *count = totalFaces;
+
+    int vertPerObject = 0;
+    int normPerObject = 0;
+    int numberOfTriangles = 0;
 
     while ((read = getline(&line, &len, fp)) != -1)
     {
+        lineNb++;
 #if PRINT_LOADING >= 4
         printf("Retrieved line of length %zu:\n", read);
         printf("%s", line);
@@ -248,7 +260,7 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
             char objectName[256];
             if (ret = sscanf(line, "o %s", objectName))
             {
-#if PRINT_LOADING >= 3
+#if PRINT_LOADING >= 2
                 printf("\nNEW OBJECT: %s\n", objectName);
 #endif
             }
@@ -257,10 +269,47 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
         // define vertices
         if (strncmp(line, "v ", 2) == 0)
         {
+            float vx, vy, vz;
             newState = RS_VERTICES;
-            char mtlFileName[256];
-            if (ret = sscanf(line, "v %s", mtlFileName))
+            vertPerObject++;
+            if (ret = sscanf(line, "v %f %f %f", &vx, &vy, &vz))
             {
+            }
+            else
+            {
+                fprintf(stderr, "# ERROR while reading %dth vertex (line %d)", vertPerObject, lineNb);
+            }
+        }
+
+        // define vertex normals
+        if (strncmp(line, "vn ", 3) == 0)
+        {
+            float vx, vy, vz;
+            newState = RS_VERTICES;
+            normPerObject++;
+            if (ret = sscanf(line, "vn %f %f %f", &vx, &vy, &vz))
+            {
+            }
+            else
+            {
+                fprintf(stderr, "# ERROR while reading %dth vertex normal (line %d)", normPerObject, lineNb);
+            }
+        }
+
+        // define faces
+        if (strncmp(line, "f ", 2) == 0)
+        {
+            int av, at, an, bv, bt, bn, cv, ct, cn;
+            newState = RS_FACE;
+            if (ret = sscanf(line, "v %d/%d/%d %d/%d/%d %d/%d/%d", &av, &at, &an, &bv, &bt, &bn, &cv, &ct, &cn))
+            {
+            }
+            else if (ret = sscanf(line, "v %d//%d %d//%d %d//%d", &av, &an, &bv, &bn, &cv, &cn))
+            {
+            }
+            else
+            {
+                fprintf(stderr, "# ERROR while reading %dth triangle (line %d)", numberOfTriangles, lineNb);
             }
         }
     }
@@ -273,6 +322,6 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
     printf("\nFile reading ended.\n");
 #endif
     free(globalVerts);
-    free(globalFaces);
+    free(globalNorms);
     return 0;
 }
