@@ -19,8 +19,8 @@ static const int sphereCount = 0;//sizeof(spheres)/sizeof(Sphere);
 static Triangle *triangles=NULL; //to parse from triangles.txt
 static int triangleCount = 0;
 
-static int const w = 128*8;//width
-static int const h = 128*8;//height
+static int const w = 128*2;//width
+static int const h = 128*2;//height
 static int const accumulationCount = 100*9;//1000 = ok
 static int const maxBounce = 20;
 static vec3 const sunDirection = {-30,-85,100};
