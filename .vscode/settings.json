@@ -11,6 +11,8 @@
         "types.h": "c",
         "stddef.h": "c",
         "objloader.h": "c",
-        "source_location": "c"
+        "source_location": "c",
+        "*.tcc": "c",
+        "istream": "c"
     }
 }
