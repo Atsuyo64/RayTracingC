@@ -13,6 +13,7 @@
         "objloader.h": "c",
         "source_location": "c",
         "*.tcc": "c",
-        "istream": "c"
+        "istream": "c",
+        "pthread.h": "c"
     }
 }

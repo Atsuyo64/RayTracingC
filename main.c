@@ -2,13 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <pthread.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stbi_image_write.h"
 #include "raytracing.h"
 #include "scene.h"
 
+#define MULTITHREADED 0
+#if defined(_WIN32) || (MULTITHREADED == 0)
+#include <pthread.h>
 #define NUMBER_OF_THREADS 12
+#endif
 
 typedef struct threadArgs
 {
@@ -20,7 +23,7 @@ typedef struct threadArgs
 void *rowThread(void *thArgsPtr)
 {
    threadArgs *thArgs = (threadArgs *)thArgsPtr;
-   for (int y = thArgs->thID; y < h; y+=NUMBER_OF_THREADS)
+   for (int y = thArgs->thID; y < h; y += NUMBER_OF_THREADS)
    {
       for (int x = 0; x < w; ++x)
       {
@@ -53,11 +56,24 @@ int main()
    rngState = 0;
    calcColor(ray,3);
    */
-   // for(int y=0;y<h;++y)
-   // {
 
-   // }
-   
+#if defined(_WIN32) || (MULTITHREADED == 0)
+   for (int y = 0; y < h; ++y)
+   {
+      for (int x = 0; x < w; ++x)
+      {
+         vec3 dir = {(x - halfW) / (float)halfH, (y - halfH) / (float)halfH, 1}; // aspect ratio respected
+         // dir = minus(dir,origin);//fixed camera dir
+         dir = normalized(dir);
+         Ray ray = {origin, dir};
+         rngState = x + y * w;
+         vec3 accumulatedColor = {0, 0, 0};
+         for (int i = 0; i < accumulationCount; ++i)
+            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, maxBounce), 1. / accumulationCount));
+         image[x + y * w] = vec3ToColor(accumulatedColor);
+      }
+   }
+#else
    pthread_t tIDs[NUMBER_OF_THREADS];
    for (int i = 0; i < NUMBER_OF_THREADS; i++)
    {
@@ -71,7 +87,9 @@ int main()
    {
       pthread_join(tIDs[i], NULL);
    }
-   stbi_write_bmp("out.bmp",w,h,3,(void const*)image);
+
+#endif
+   stbi_write_bmp("out.bmp", w, h, 3, (void const *)image);
 
    return 0;
 }
