@@ -8,4 +8,4 @@
  * loadObj function
  * @param filename
  */
-void loadObj(const char* filename);
+int loadObj(const char* filename);

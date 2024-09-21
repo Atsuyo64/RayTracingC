@@ -10,6 +10,7 @@
         "math.h": "c",
         "types.h": "c",
         "stddef.h": "c",
-        "objloader.h": "c"
+        "objloader.h": "c",
+        "source_location": "c"
     }
 }
