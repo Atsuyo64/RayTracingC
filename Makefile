@@ -11,7 +11,10 @@ all: opti
 
 # DEBUG BINS
 
-moremath_d.o: moremath.c moremath.h scene.h
+objloader_d.o: objloader.c objloader.h
+	$(CC) $(CFLAGS_DBG) -c objloader.c
+
+moremath_d.o: moremath.c moremath.h scene.h objloader.h
 	$(CC) $(CFLAGS_DBG) -c moremath.c
 
 raytracing_d.o: raytracing.c raytracing.h scene.h
@@ -22,6 +25,9 @@ main_d.o: main.c scene.h
 
 
 # OPTI BINS
+
+objloader.o: objloader.c objloader.h
+	$(CC) $(CFLAGS_OPTI) -c objloader.c
 
 moremath.o: moremath.c moremath.h scene.h
 	$(CC) $(CFLAGS_OPTI) -c moremath.c
@@ -35,11 +41,11 @@ main.o: main.c scene.h
 
 # BUILD GENERAL BIN
 
-debug: moremath_d.o raytracing_d.o main_d.o
-	$(CC) $(CFLAGS_DBG) moremath.o raytracing.o main.o -o rayt.out
+debug: moremath_d.o raytracing_d.o main_d.o objloader_d.o
+	$(CC) $(CFLAGS_DBG) moremath.o raytracing.o main.o objloader.o -o rayt.out
 
-opti: moremath.o raytracing.o main.o
-	$(CC) $(CFLAGS_OPTI) moremath.o raytracing.o main.o -o rayt.out
+opti: moremath.o raytracing.o main.o objloader.o
+	$(CC) $(CFLAGS_OPTI) moremath.o raytracing.o main.o objloader.o -o rayt.out
 
 
 # OBJ Loader & Tester

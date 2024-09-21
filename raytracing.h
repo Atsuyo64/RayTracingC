@@ -43,6 +43,7 @@ void printTriangle(Triangle t);
 void printAllTriangles();
 void cleanFile(char const* src,char const* dest);
 void parseTriangleFile(char const* name);
+void loadOBJTriangles(char const* filename);
 
 /* RAYS */
 

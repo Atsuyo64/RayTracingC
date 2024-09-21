@@ -14,6 +14,15 @@
         "source_location": "c",
         "*.tcc": "c",
         "istream": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "hash_map": "c",
+        "hash_set": "c",
+        "bitset": "c",
+        "algorithm": "c",
+        "format": "c",
+        "map": "c",
+        "set": "c",
+        "unordered_map": "c",
+        "unordered_set": "c"
     }
 }
