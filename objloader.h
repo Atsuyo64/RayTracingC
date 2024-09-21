@@ -7,6 +7,7 @@
 typedef struct OBJTriangle
 {
     float pos[3][3];
+    float normal[3];
     float color[3];
     float emission;
     float roughness;
@@ -16,4 +17,4 @@ typedef struct OBJTriangle
  * loadObj function
  * @param filename
  */
-int loadObj(const char *filename, OBJTriangle **triangles);
+int loadObj(const char *filename, OBJTriangle **triangles, int *count);

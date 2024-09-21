@@ -174,12 +174,13 @@ int loadMtl(const char *filename)
  * loadObj function
  * @param filename the name of the.obj file
  * @param triangles a null pointer on which will be allocated array of triangles
+ * @param count of triangle stored in triangles
  * 
  * TODO: Think to free() your triangles when they are unused /!\
  *
  * @return 0 if success, 1 if file not found
  */
-int loadObj(const char *filename, OBJTriangle **triangles)
+int loadObj(const char *filename, OBJTriangle **triangles, int *count)
 {
     char filenamemod[512];
     strcpy(filenamemod, filename);
@@ -206,6 +207,7 @@ int loadObj(const char *filename, OBJTriangle **triangles)
     allocateMemory(filename);
     // list allocated
     *triangles = malloc((totalFaces)*sizeof(OBJTriangle));
+    *count = totalFaces;
 
     while ((read = getline(&line, &len, fp)) != -1)
     {
