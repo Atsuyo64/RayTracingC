@@ -25,7 +25,8 @@
       "unordered_map": "c",
       "unordered_set": "c",
       "scene.h": "c",
-      "ios": "c"
+      "ios": "c",
+      "__node_handle": "c"
    },
    "C_Cpp.errorSquiggles": "disabled"
 }

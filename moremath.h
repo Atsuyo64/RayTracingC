@@ -15,6 +15,7 @@ typedef struct vec3
 
 float length(vec3 v);
 vec3 normalized(vec3 v);
+vec3 mkV3(float x, float y, float z);
 
 vec3 plus(vec3 a,vec3 b);
 vec3 minus(vec3 a,vec3 b);

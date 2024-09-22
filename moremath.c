@@ -16,6 +16,12 @@ vec3 normalized(vec3 v)
    return res;
 }
 
+vec3 mkV3(float x, float y, float z)
+{
+   vec3 res = {x, y, z};
+   return res;
+}
+
 uint8 floatToUint(float f)
 {
    if(f<0)

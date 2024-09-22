@@ -6,3 +6,5 @@ out.bmp
 build/
 *.h.gch
 out.bmp
+y.bmp
+z.bmp
