@@ -56,7 +56,6 @@ int totalFaces = 0;
 #ifdef _WIN32
 //getline is POSIX-only so we have to make our own
 
-#define BUFSIZ 2048
 ssize_t getline(char** buffer,size_t* len,FILE* file)
 {
    if(*buffer==NULL || *len == 0)

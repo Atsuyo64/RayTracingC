@@ -36,6 +36,13 @@ void printAllTriangles()
       printTriangle(triangles[i]);
 }
 
+void skipUntilDelim(FILE* file,char delim)
+{
+   char c;
+   do c=fgetc(file);
+   while (c!=delim);
+}
+
 void cleanFile(char const *src, char const *dest)
 {
    FILE *in = fopen(src, "r");
@@ -49,6 +56,12 @@ void cleanFile(char const *src, char const *dest)
    {
       if (('0' <= c && c <= '9') || c == '-' || c == '.' || c == '\n' || c == '+')
          fputc(c, out);
+      else if(c=='/')//allow comments in the file
+      {
+         c=fgetc(in);
+         if(c=='/') skipUntilDelim(in,'\n');
+         else ungetc(c,in);
+      }
       else
          fputc(' ', out);
    }
