@@ -183,10 +183,6 @@ int allocateMemory(const char *filename)
    if (line)
       free(line);
 
-   // allocating max+1 because OBJ start indexing at 1
-   globalVerts = malloc((maxVerticesPerObject + 1) * sizeof(ObjVert));
-   globalFaces = malloc((maxFacesPerObject + 1) * sizeof(ObjFace));
-
     // allocating max+1 because OBJ start indexing at 1
     globalVerts = malloc((maxVerticesPerObject + 1) * sizeof(ObjVert));
     globalNorms = malloc((maxNormsPerObject + 1) * sizeof(ObjVert));
@@ -253,7 +249,7 @@ void objTriangleArrayFree(OBJTriangle **triangles, int count)
     {
         free(triangles[i]);
     }
-    //free(triangles);
+    free(triangles);
 }
 
 /**
@@ -361,7 +357,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
             vertPerObject++;
             if (ret = sscanf(line, "v %f %f %f", &globalVerts[vertPerObject].x, &globalVerts[vertPerObject].y, &globalVerts[vertPerObject].z))
             {
-                printf("V: %d (%f, %f, %f)\n", vertPerObject , globalVerts[vertPerObject].x, globalVerts[vertPerObject].y, globalVerts[vertPerObject].z);
+                // printf("V: %d (%f, %f, %f)\n", vertPerObject , globalVerts[vertPerObject].x, globalVerts[vertPerObject].y, globalVerts[vertPerObject].z);
             }
             else
             {
@@ -377,7 +373,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
             normPerObject++;
             if (ret = sscanf(line, "vn %f %f %f", &globalNorms[normPerObject].x, &globalNorms[normPerObject].y, &globalNorms[normPerObject].z))
             {
-                printf("VN: %d (%f, %f, %f)\n", normPerObject, globalNorms[normPerObject].x, globalNorms[normPerObject].y, globalNorms[normPerObject].z);
+                // printf("VN: %d (%f, %f, %f)\n", normPerObject, globalNorms[normPerObject].x, globalNorms[normPerObject].y, globalNorms[normPerObject].z);
             }
             else
             {
@@ -395,8 +391,8 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
             {
                 // OBJTriangle t = {0};
                 // t.smoothness = .5;
-                printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
-                printf("B: %f, %f, %f\n", globalVerts[bv].x, globalVerts[bv].y, globalVerts[bv].z);
+                // printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
+                // printf("B: %f, %f, %f\n", globalVerts[bv].x, globalVerts[bv].y, globalVerts[bv].z);
                 memcpy(&(*triangles)[numberOfTriangles]->posA, &globalVerts[av], sizeof(ObjVert));
                 memcpy(&(*triangles)[numberOfTriangles]->posB, &globalVerts[bv], sizeof(ObjVert));
 
@@ -436,14 +432,11 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
    if (line)
       free(line);
 
-    // printf("CONNARD: %f\n", (*triangles)[0]->smoothness);
-    // printOBJTriangle(*(*triangles)[0]);
-
 #if PRINT_LOADING >= 2
    printf("\nFile reading ended.\n");
 #endif
-    // free(globalVerts);
-    // free(globalNorms);
+    free(globalVerts);
+    free(globalNorms);
 
     return 0;
 }

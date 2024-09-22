@@ -62,7 +62,7 @@ int main(int argc, char const *argv[])
    }
    // printAllTriangles();
    Color image[w * h];
-   vec3 origin = {0, 0, -7};
+   vec3 origin = {0, -1, -3};
    vec3 lookingAt = {0,0,0};
    float fov = 1;
    
