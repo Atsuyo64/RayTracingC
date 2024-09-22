@@ -48,6 +48,7 @@ int totalNorms = 0;
 int totalFaces = 0;
 int totalObjs = 0;
 int totalMtls = 0;
+int currentMtl = -1;
 
 #ifdef _WIN32
 // getline is POSIX-only so we have to make our own
@@ -150,7 +151,7 @@ int allocateMtlMemory(const char *filename)
 
 #if PRINT_LOADING >= 2
     // printf("\rAllocated memory: objects=%d vertices=%d bormals=%d faces=%d\n", totalObjs, totalVerts, totalNorms, totalFaces);
-    printf("\r%d materials allocated.\n", totalMtls);
+    printf("\r%d materials allocated.                \n", totalMtls);
 #endif
     return 0;
 }
@@ -268,12 +269,12 @@ int loadMtl(const char *filename)
             float ns;
             if (ret = sscanf(line, "Ns %f", &ns))
             {
-                globalMats[matNb].smoothness = sqrt(0.001*ns);
+                globalMats[matNb].smoothness = sqrt(0.001 * ns);
                 // printf("VN: %d (%f, %f, %f)\n", normSaved, globalNorms[normSaved].x, globalNorms[normSaved].y, globalNorms[normSaved].z);
             }
             else
             {
-                fprintf(stderr, "\n# ERROR while reading %dth Material specular (line %d)\n", (matNb+1), lineNb);
+                fprintf(stderr, "\n# ERROR while reading %dth Material specular (line %d)\n", (matNb + 1), lineNb);
             }
         }
 
@@ -285,7 +286,7 @@ int loadMtl(const char *filename)
             }
             else
             {
-                fprintf(stderr, "\n# ERROR while reading %dth Material diffuse color (line %d)\n", (matNb+1), lineNb);
+                fprintf(stderr, "\n# ERROR while reading %dth Material diffuse color (line %d)\n", (matNb + 1), lineNb);
             }
         }
 
@@ -299,7 +300,7 @@ int loadMtl(const char *filename)
             }
             else
             {
-                fprintf(stderr, "\n# ERROR while reading %dth Material specular (line %d)\n", (matNb+1), lineNb);
+                fprintf(stderr, "\n# ERROR while reading %dth Material specular (line %d)\n", (matNb + 1), lineNb);
             }
         }
     }
@@ -408,6 +409,26 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
             }
         }
 
+        // use material
+        if (strncmp(line, "usemtl ", 7) == 0)
+        {
+            char mtlName[256];
+            if (ret = sscanf(line, "usemtl %s", mtlName))
+            {
+                int found = 0;
+                for (int i = 0; i < totalMtls && !found; i++)
+                {
+                    if (strcmp(mtlName, globalMats[i].name) == 0)
+                    {
+                        found = 1;
+                        currentMtl = i;
+                    }
+                }
+                if (!found)
+                    currentMtl = -1;
+            }
+        }
+
         // define object name
         if (strncmp(line, "o ", 2) == 0)
         {
@@ -477,9 +498,18 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
                 memcpy(&(*triangles)[numberOfTriangles]->posC, &globalVerts[cv], sizeof(OBJVec3));
                 memcpy(&(*triangles)[numberOfTriangles]->normal, &globalNorms[an], sizeof(OBJVec3));
 
-                memcpy(&(*triangles)[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(OBJVec3));
-                (*triangles)[numberOfTriangles]->emission = 0;
-                (*triangles)[numberOfTriangles]->smoothness = 0;
+                if (currentMtl < 0 || currentMtl >= totalMtls)
+                {
+                    memcpy(&(*triangles)[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(OBJVec3));
+                    (*triangles)[numberOfTriangles]->emission = 0;
+                    (*triangles)[numberOfTriangles]->smoothness = 0;
+                }
+                else {
+                    memcpy(&(*triangles)[numberOfTriangles]->color, &globalMats[currentMtl].color, sizeof(OBJVec3));
+                    (*triangles)[numberOfTriangles]->emission = globalMats[currentMtl].emission;
+                    (*triangles)[numberOfTriangles]->smoothness = globalMats[currentMtl].smoothness;
+                }
+
                 // memcpy(triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
                 // printf("\nHAY: %f\n", t.smoothness);
                 // printf("\nHEY: %f\n", triangles[numberOfTriangles]->pos[0][0]);
