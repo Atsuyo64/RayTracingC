@@ -85,26 +85,49 @@ void loadOBJTriangles(char const *filename)
 {
    int ret;
    triangleCount = -1;
-   OBJTriangle *objTriangles;
+   OBJTriangle **objTriangles;
    ret = loadObj(filename, &objTriangles, &triangleCount);
    if (triangleCount == -1 || ret != 0)
    {
       fprintf(stderr, "ERROR WHILE LOADING OBJ ! (%s)", filename);
       exit(42);
    }
-
    triangles = malloc(sizeof(Triangle) * triangleCount);
    printf("Converting to triangles... 0/%d", triangleCount);
    fflush(stdin);
    for (int i = 0; i < triangleCount; ++i)
    {
-      printf("\rConverting to triangles... %d/%d", (i+1), triangleCount);
+      printf("\rConverting to RTC triangles... %d/%d", (i + 1), triangleCount);
       fflush(stdin);
-      //(triangles + i)->posA.x = objTriangles[0].pos[0][0];
+      // rotateZ(180deg): -x -y z
+      //coordinates
+
+      // printf("0s %f\n", objTriangles[0]->smoothness);
+      // printOBJTriangle(objTriangles[i]);
+      triangles[i].posA.x = -objTriangles[i]->posA.x;
+      triangles[i].posA.y = -objTriangles[i]->posA.y;
+      triangles[i].posA.z = objTriangles[i]->posA.z;
+      triangles[i].posB.x = -objTriangles[i]->posB.x;
+      triangles[i].posB.y = -objTriangles[i]->posB.y;
+      triangles[i].posB.z = objTriangles[i]->posB.z;
+      triangles[i].posC.x = -objTriangles[i]->posC.x;
+      triangles[i].posC.y = -objTriangles[i]->posC.y;
+      triangles[i].posC.z = objTriangles[i]->posC.z;
+      // normal
+      triangles[i].normal.x = -objTriangles[i]->normal.x;
+      triangles[i].normal.y = -objTriangles[i]->normal.y;
+      triangles[i].normal.z = objTriangles[i]->normal.z;
+      // shading
+      triangles[i].mat.color.x = objTriangles[i]->color.x;
+      triangles[i].mat.color.y = objTriangles[i]->color.y;
+      triangles[i].mat.color.z = objTriangles[i]->color.z;
+      triangles[i].mat.emissionStrength = objTriangles[i]->emission;
+      triangles[i].mat.smoothness = objTriangles[i]->smoothness;
+      // printTriangle(triangles[i]);
    }
    printf("\n");
 
-   free(objTriangles);
+   objTriangleArrayFree(objTriangles, triangleCount);
 }
 
 /* RAYS */
