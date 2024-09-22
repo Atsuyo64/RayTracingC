@@ -14,7 +14,7 @@ static Sphere const spheres[] = {{{2,-.8,2},1,{{1,1,1},0,1}},
                                  };
                                  //{{{0,0.7071068,4},1,{{1,1,1},1}},{{0,0,2},1,{{1,0,0},1}}};//debug
 */
-static Sphere const spheres[] = {{{0,0,0},2.5,{{1,1,1},0,0}},};//{{0,5,0},1.5,{{1,1,1},10,0}},
+static Sphere const spheres[] = {{{0,1,0},2.5,{{1,1,1},0,0}},};//{{0,5,0},1.5,{{1,1,1},10,0}},
 static const int sphereCount = sizeof(spheres)/sizeof(Sphere);
 static Triangle *triangles=NULL; //to parse from triangles.txt
 static int triangleCount = 0;
