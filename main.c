@@ -46,15 +46,15 @@ int main(int argc, char const *argv[])
 {
    int trianglesOnly = 0;
    normalizedSunDirection = normalized(sunDirection);
-   if (argc == 1)
+   if (argc < 2 || strcmp(argv[1], "--help") == 0)
    {
+      printf("%s needs at least one param.\n", argv[0]);
+      printf("%s <default|path/to/file.obj> [posX posY posZ] [trackX trackY trackZ].\n", argv[0]);
+      exit(0);
+   }
+   else if (strcmp(argv[1], "default") == 0) {
       printf("Parsing triangles...\n");
       parseTriangleFile("debugTriangles.txt");
-   }
-   else if (strcmp(argv[1], "--help") == 0)
-   {
-      printf("%s takes as (optional) param an obj file.\n");
-      exit(0);
    }
    else
    {
