@@ -151,7 +151,7 @@ void loadOBJTriangles(char const *filename)
 vec3 getEnvironmentLight(Ray ray, Scene s)
 {
    float skyGradientT = powf(smoothstep(0, .74, -ray.dir.y), .35);
-   vec3 skyGradient = lerp(s.skyColorZenith, s.skyColorZenith, skyGradientT);
+   vec3 skyGradient = lerp(s.skyColorHorizon, s.skyColorZenith, skyGradientT);
    float sun = powf(fmax(0, dot(ray.dir, s.normalizedSunDirection)), s.sunFocus) * s.sunIntensity;
    float groundToSkyT = smoothstep(-0.01, 0, -ray.dir.y);
    float sunMask = ray.dir.y < 0;

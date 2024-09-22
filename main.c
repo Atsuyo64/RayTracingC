@@ -12,11 +12,11 @@ int height = 128;
 int maxBounce = 10;
 
 vec3 sunDirection = {-30, -85, 100};
-vec3 skyColorHorizon = {1, 1, 1};
-vec3 skyColorZenith = {0.263, 0.969, 0.871};
-vec3 groundColor;// = {.66, .66, .66};
-float sunFocus = 22;
-float sunIntensity = .75;
+// vec3 skyColorHorizon = {1, 1, 1};
+// vec3 skyColorZenith = {0.263, 0.969, 0.871};
+// vec3 groundColor;// = {.66, .66, .66};
+// float sunFocus = 22;
+// float sunIntensity = .75;
 vec3 normalizedSunDirection;
 Scene scene = {
    // normalizedSunDirection
@@ -55,7 +55,9 @@ void printHelp4(char const *progName, char const *errorDescription, char const *
    \n   # CAMERA SETTINGS\
    \n\t[-f|--fov <fov>]\n\t[-s|--size <width> <height>]\n\t[-b|--max-bounce <maxBounce>]\
    \n   # SCENE SETTINGS\
-   \n\t[-gc|--ground-color <R> <G> <B>]\n\t[-gc|--ground-color <R> <G> <B>]\
+   \n\t[-gc|--ground-color <R> <G> <B>]\n\t[-sch|--sky-color-horizon <R> <G> <B>]\n\t[-scz|--sky-color-zenith <R> <G> <B>]\
+   \n   # SUN SETTINGS\
+   \n\t[--sun <x> <y> <z> <focus> <intensity>]\
    \n",
           progName);
    exit(0);
@@ -179,6 +181,48 @@ int main(int argc, char const *argv[])
          i += 2;
       }
 
+      // SCENE SETTINGS
+      else if (strcmp(argv[i], "--ground-color") == 0 || strcmp(argv[i], "-gc") == 0)
+      {
+         if (argc - 1 < i + 3)
+            printHelp2(argv[0], "ERROR: --ground-color/-gc takes 3 more params (float r,g,b)\n");
+         scene.groundColor.x = atof(argv[i + 1]);
+         scene.groundColor.y = atof(argv[i + 2]);
+         scene.groundColor.z = atof(argv[i + 3]);
+         i += 3;
+      }
+      else if (strcmp(argv[i], "--sky-color-horizon") == 0 || strcmp(argv[i], "-sch") == 0)
+      {
+         if (argc - 1 < i + 3)
+            printHelp2(argv[0], "ERROR: --sky-color-horizon/-sch takes 3 more params (float r,g,b)\n");
+         scene.skyColorHorizon.x = atof(argv[i + 1]);
+         scene.skyColorHorizon.y = atof(argv[i + 2]);
+         scene.skyColorHorizon.z = atof(argv[i + 3]);
+         i += 3;
+      }
+      else if (strcmp(argv[i], "--sky-color-zenith") == 0 || strcmp(argv[i], "-scz") == 0)
+      {
+         if (argc - 1 < i + 3)
+            printHelp2(argv[0], "ERROR: --sky-color-zenith/-scz takes 3 more params (float r,g,b)\n");
+         scene.skyColorZenith.x = atof(argv[i + 1]);
+         scene.skyColorZenith.y = atof(argv[i + 2]);
+         scene.skyColorZenith.z = atof(argv[i + 3]);
+         i += 3;
+      }
+
+      // SUN SETTINGS
+      else if (strcmp(argv[i], "--sun") == 0)
+      {
+         if (argc - 1 < i + 5)
+            printHelp2(argv[0], "ERROR: --sun takes 5 more params (float x,y,z,focus,intensity)\n");
+         sunDirection.x = atof(argv[i + 1]);
+         sunDirection.y = atof(argv[i + 2]);
+         sunDirection.z = atof(argv[i + 3]);
+         scene.sunFocus = atof(argv[i + 4]);
+         scene.sunIntensity = atof(argv[i + 5]);
+         i += 5;
+      }
+
       // THROW ERROR
       else
       {
@@ -201,6 +245,10 @@ int main(int argc, char const *argv[])
 
    Color image[width * height];
    normalizedSunDirection = normalized(sunDirection);
+   scene.normalizedSunDirection.x = normalizedSunDirection.x;
+   scene.normalizedSunDirection.y = normalizedSunDirection.y;
+   scene.normalizedSunDirection.z = normalizedSunDirection.z;
+   // printf("SUNDIRECTION: %f, %f, %f\n", scene.normalizedSunDirection.x, scene.normalizedSunDirection.y, scene.normalizedSunDirection.z);
    vec3 ez = normalized(minus(lookingAt, origin));
    vec3 up = {0, -1, 0};
    vec3 ex = normalized(cross(ez, up));

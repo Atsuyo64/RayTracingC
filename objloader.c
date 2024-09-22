@@ -378,7 +378,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
                 // globalVerts[vertSaved].x = vx;
                 // globalVerts[vertSaved].y = vy;
                 // globalVerts[vertSaved].z = vz;
-                printf("V: %d (%f, %f, %f)\n", vertSaved, globalVerts[vertSaved].x, globalVerts[vertSaved].y, globalVerts[vertSaved].z);
+                // printf("V: %d (%f, %f, %f)\n", vertSaved, globalVerts[vertSaved].x, globalVerts[vertSaved].y, globalVerts[vertSaved].z);
                 // printf("V: %d (%f, %f, %f) [%f, %f, %f]\n", vertSaved, globalVerts[vertSaved].x, globalVerts[vertSaved].y, globalVerts[vertSaved].z, vx, vy, vz);
             }
             else
@@ -395,7 +395,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
             normSaved++;
             if (ret = sscanf(line, "vn %f %f %f", &globalNorms[normSaved].x, &globalNorms[normSaved].y, &globalNorms[normSaved].z))
             {
-                printf("VN: %d (%f, %f, %f)\n", normSaved, globalNorms[normSaved].x, globalNorms[normSaved].y, globalNorms[normSaved].z);
+                // printf("VN: %d (%f, %f, %f)\n", normSaved, globalNorms[normSaved].x, globalNorms[normSaved].y, globalNorms[normSaved].z);
             }
             else
             {
@@ -413,7 +413,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
             {
                 // OBJTriangle t = {0};
                 // t.smoothness = .5;
-                printf("f %d/%d/%d\n", av, bv, cv);
+                // printf("f %d/%d/%d\n", av, bv, cv);
                 // printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
                 // printf("B: %f, %f, %f\n", globalVerts[bv].x, globalVerts[bv].y, globalVerts[bv].z);
                 memcpy(&(*triangles)[numberOfTriangles]->posA, &globalVerts[av], sizeof(OBJVec3));
