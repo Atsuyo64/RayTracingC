@@ -214,7 +214,7 @@ void objTriangleArrayFree(OBJTriangle **triangles, int count)
  *
  * @return 0 if success, 1 if file not found
  */
-int loadObj(const char *filename, OBJTriangle **triangles, int *count)
+int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
 {
     char filenamemod[512];
     strcpy(filenamemod, filename);
@@ -242,10 +242,10 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
     allocateMemory(filename);
     // list allocation
     // triangles = malloc((totalFaces) * sizeof(OBJTriangle));
-    *triangles = malloc((totalFaces) * sizeof(OBJTriangle *));
+    (*triangles) = malloc((totalFaces) * sizeof(OBJTriangle *));
     for (size_t i = 0; i < totalFaces; i++)
     {
-        triangles[i] = malloc(sizeof(OBJTriangle));
+        (*triangles)[i] = malloc(sizeof(OBJTriangle));
     }
     *count = totalFaces;
 
@@ -345,19 +345,19 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
                 // t.smoothness = .5;
                 printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
                 printf("B: %f, %f, %f\n", globalVerts[bv].x, globalVerts[bv].y, globalVerts[bv].z);
-                memcpy(&triangles[numberOfTriangles]->posA, &globalVerts[av], sizeof(ObjVert));
-                memcpy(&triangles[numberOfTriangles]->posB, &globalVerts[bv], sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->posA, &globalVerts[av], sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->posB, &globalVerts[bv], sizeof(ObjVert));
 
-                memcpy(&triangles[numberOfTriangles]->posC, &globalVerts[cv], sizeof(ObjVert));
-                memcpy(&triangles[numberOfTriangles]->normal, &globalNorms[an], sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->posC, &globalVerts[cv], sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->normal, &globalNorms[an], sizeof(ObjVert));
 
-                memcpy(&triangles[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(ObjVert));
-                triangles[numberOfTriangles]->emission = 0;
-                triangles[numberOfTriangles]->smoothness = 0.5;
+                memcpy(&(*triangles)[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(ObjVert));
+                (*triangles)[numberOfTriangles]->emission = 0;
+                (*triangles)[numberOfTriangles]->smoothness = 0;
                 // memcpy(triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
                 // printf("\nHAY: %f\n", t.smoothness);
                 // printf("\nHEY: %f\n", triangles[numberOfTriangles]->pos[0][0]);
-                printOBJTriangle(*triangles[numberOfTriangles]);
+                // printOBJTriangle(*(*triangles)[numberOfTriangles]);
             }
             else if (ret = sscanf(line, "f %d//%d %d//%d %d//%d", &av, &an, &bv, &bn, &cv, &cn))
             {
@@ -384,8 +384,8 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
     if (line)
         free(line);
 
-    printf("CONNARD: %f\n", triangles[0]->smoothness);
-    printOBJTriangle(*triangles[0]);
+    // printf("CONNARD: %f\n", (*triangles)[0]->smoothness);
+    // printOBJTriangle(*(*triangles)[0]);
 
 #if PRINT_LOADING >= 2
     printf("\nFile reading ended.\n");

@@ -46,4 +46,4 @@ void objTriangleArrayFree(OBJTriangle **triangles, int count);
  *
  * @return 0 if success, 1 if file not found
  */
-int loadObj(const char *filename, OBJTriangle **triangles, int *count);
+int loadObj(const char *filename, OBJTriangle ***triangles, int *count);
