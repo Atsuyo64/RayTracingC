@@ -8,11 +8,11 @@
 
 typedef struct Color
 {
-   uint8 r,g,b;
+   uint8 r, g, b;
 } Color;
 
-static vec3 WHITE = {1,1,1};
-static vec3 BLACK = {0,0,0};
+static vec3 WHITE = {1, 1, 1};
+static vec3 BLACK = {0, 0, 0};
 
 Color vec3ToColor(vec3 v);
 
@@ -34,16 +34,16 @@ typedef struct Sphere
 
 typedef struct Triangle
 {
-   vec3 posA,posB,posC,normal;
+   vec3 posA, posB, posC, normal;
    Material mat;
 } Triangle;
 
-void parseAndPlaceTriangle(Triangle* t,FILE* file);
+void parseAndPlaceTriangle(Triangle *t, FILE *file);
 void printTriangle(Triangle t);
 void printAllTriangles();
-void cleanFile(char const* src,char const* dest);
-void parseTriangleFile(char const* name);
-void loadOBJTriangles(char const* filename);
+void cleanFile(char const *src, char const *dest);
+void parseTriangleFile(char const *name);
+void loadOBJTriangles(char const *filename);
 
 /* RAYS */
 
@@ -63,8 +63,8 @@ typedef struct Ray
 } Ray;
 
 vec3 getEnvironmentLight(Ray ray);
-HitInfo raySphere(Ray ray,vec3 sphereCentre,float radius);
-HitInfo rayTriangle(Ray ray,Triangle t);
-HitInfo CalculateRayCollision(Ray ray);
-vec3 calcDebugColor(Ray ray,int maxBounce);
-vec3 calcColor(Ray ray,int maxBounce);
+HitInfo raySphere(Ray ray, vec3 sphereCentre, float radius);
+HitInfo rayTriangle(Ray ray, Triangle t);
+HitInfo calculateRayCollision(Ray ray, int trianglesOnly);
+vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce);
+vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce);

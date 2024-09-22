@@ -36,11 +36,12 @@ void printAllTriangles()
       printTriangle(triangles[i]);
 }
 
-void skipUntilDelim(FILE* file,char delim)
+void skipUntilDelim(FILE *file, char delim)
 {
    char c;
-   do c=fgetc(file);
-   while (c!=delim);
+   do
+      c = fgetc(file);
+   while (c != delim);
 }
 
 void cleanFile(char const *src, char const *dest)
@@ -56,11 +57,13 @@ void cleanFile(char const *src, char const *dest)
    {
       if (('0' <= c && c <= '9') || c == '-' || c == '.' || c == '\n' || c == '+')
          fputc(c, out);
-      else if(c=='/')//allow comments in the file
+      else if (c == '/') // allow comments in the file
       {
-         c=fgetc(in);
-         if(c=='/') skipUntilDelim(in,'\n');
-         else ungetc(c,in);
+         c = fgetc(in);
+         if (c == '/')
+            skipUntilDelim(in, '\n');
+         else
+            ungetc(c, in);
       }
       else
          fputc(' ', out);
@@ -98,26 +101,49 @@ void loadOBJTriangles(char const *filename)
 {
    int ret;
    triangleCount = -1;
-   OBJTriangle *objTriangles;
+   OBJTriangle **objTriangles;
    ret = loadObj(filename, &objTriangles, &triangleCount);
    if (triangleCount == -1 || ret != 0)
    {
       fprintf(stderr, "ERROR WHILE LOADING OBJ ! (%s)", filename);
       exit(42);
    }
-
    triangles = malloc(sizeof(Triangle) * triangleCount);
    printf("Converting to triangles... 0/%d", triangleCount);
    fflush(stdin);
    for (int i = 0; i < triangleCount; ++i)
    {
-      printf("\rConverting to triangles... %d/%d", (i+1), triangleCount);
+      printf("\rConverting to RTC triangles... %d/%d", (i + 1), triangleCount);
       fflush(stdin);
-      //(triangles + i)->posA.x = objTriangles[0].pos[0][0];
+      // rotateZ(180deg): -x -y z
+      // coordinates
+
+      // printf("0s %f\n", objTriangles[0]->smoothness);
+      // printOBJTriangle(objTriangles[i]);
+      triangles[i].posA.x = -objTriangles[i]->posA.x;
+      triangles[i].posA.y = -objTriangles[i]->posA.y;
+      triangles[i].posA.z = objTriangles[i]->posA.z;
+      triangles[i].posB.x = -objTriangles[i]->posB.x;
+      triangles[i].posB.y = -objTriangles[i]->posB.y;
+      triangles[i].posB.z = objTriangles[i]->posB.z;
+      triangles[i].posC.x = -objTriangles[i]->posC.x;
+      triangles[i].posC.y = -objTriangles[i]->posC.y;
+      triangles[i].posC.z = objTriangles[i]->posC.z;
+      // normal
+      triangles[i].normal.x = -objTriangles[i]->normal.x;
+      triangles[i].normal.y = -objTriangles[i]->normal.y;
+      triangles[i].normal.z = objTriangles[i]->normal.z;
+      // shading
+      triangles[i].mat.color.x = objTriangles[i]->color.x;
+      triangles[i].mat.color.y = objTriangles[i]->color.y;
+      triangles[i].mat.color.z = objTriangles[i]->color.z;
+      triangles[i].mat.emissionStrength = objTriangles[i]->emission;
+      triangles[i].mat.smoothness = objTriangles[i]->smoothness;
+      // printTriangle(triangles[i]);
    }
    printf("\n");
 
-   free(objTriangles);
+   objTriangleArrayFree(objTriangles, triangleCount);
 }
 
 /* RAYS */
@@ -160,7 +186,8 @@ HitInfo raySphere(Ray ray, vec3 sphereCentre, float radius)
 HitInfo rayTriangle(Ray ray, Triangle t)
 {
    HitInfo hitInfo = {0};
-   if(dot(ray.dir,t.normal)>=0) return hitInfo;
+   if (dot(ray.dir, t.normal) >= 0)
+      return hitInfo;
    vec3 AB = minus(t.posB, t.posA);
    vec3 AC = minus(t.posC, t.posA);
    vec3 h = cross(ray.dir, AC);
@@ -186,18 +213,19 @@ HitInfo rayTriangle(Ray ray, Triangle t)
    return hitInfo;
 }
 
-HitInfo CalculateRayCollision(Ray ray)
+HitInfo calculateRayCollision(Ray ray, int trianglesOnly)
 {
    HitInfo closest = {0, 999999};
-   for (int i = 0; i < sphereCount; ++i)
-   {
-      HitInfo hitInfo = raySphere(ray, spheres[i].pos, spheres[i].r);
-      if (hitInfo.didHit && hitInfo.dst < closest.dst)
+   if (trianglesOnly == 0)
+      for (int i = 0; i < sphereCount; ++i)
       {
-         closest = hitInfo;
-         closest.mat = spheres[i].mat;
+         HitInfo hitInfo = raySphere(ray, spheres[i].pos, spheres[i].r);
+         if (hitInfo.didHit && hitInfo.dst < closest.dst)
+         {
+            closest = hitInfo;
+            closest.mat = spheres[i].mat;
+         }
       }
-   }
    for (int i = 0; i < triangleCount; ++i)
    {
       HitInfo hitInfo = rayTriangle(ray, triangles[i]);
@@ -211,12 +239,12 @@ HitInfo CalculateRayCollision(Ray ray)
    return closest;
 }
 
-vec3 calcDebugColor(Ray ray, int maxBounce)
+vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce)
 {
    int i;
    for (i = 0; i < maxBounce; ++i)
    {
-      HitInfo hitInfo = CalculateRayCollision(ray);
+      HitInfo hitInfo = calculateRayCollision(ray, trianglesOnly);
       // printf("[Bounce %i]\n\tRay:\n\t\tPos %f %f %f\n\t\tDir %f %f %f\n\tHit %s\n\t\tDist %f\n\t\tPos %f %f %f\n\t\tNormal %f %f %f\n\t\tColor %f %f %f %f\n\tPrev rayColor %f %f %f\n\tPrev light %f %f %f\n\n\n",i,ray.pos.x,ray.pos.y,ray.pos.z,ray.dir.x,ray.dir.y,ray.dir.z,hitInfo.didHit?"TRUE":"FALSE",hitInfo.dst,hitInfo.hitPoint.x,hitInfo.hitPoint.y,hitInfo.hitPoint.z,hitInfo.normal.x,hitInfo.normal.y,hitInfo.normal.z,hitInfo.mat.color.x,hitInfo.mat.color.y,hitInfo.mat.color.z,hitInfo.mat.emissionStrength,rayColor.x,rayColor.y,rayColor.z,incomingLight.x,incomingLight.y,incomingLight.z);
       if (hitInfo.didHit)
       {
@@ -231,7 +259,7 @@ vec3 calcDebugColor(Ray ray, int maxBounce)
    return lerp(BLACK, WHITE, i / (float)maxBounce);
 }
 
-vec3 calcColor(Ray ray, int maxBounce)
+vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce)
 {
    // Color skyColor={0x77,0xB5,0xFE};
    vec3 incomingLight = {0, 0, 0};
@@ -239,7 +267,7 @@ vec3 calcColor(Ray ray, int maxBounce)
    int i;
    for (i = 0; i < maxBounce; ++i)
    {
-      HitInfo hitInfo = CalculateRayCollision(ray);
+      HitInfo hitInfo = calculateRayCollision(ray, trianglesOnly);
       // printf("[Bounce %i]\n\tRay:\n\t\tPos %f %f %f\n\t\tDir %f %f %f\n\tHit %s\n\t\tDist %f\n\t\tPos %f %f %f\n\t\tNormal %f %f %f\n\t\tColor %f %f %f %f\n\tPrev rayColor %f %f %f\n\tPrev light %f %f %f\n\n\n",i,ray.pos.x,ray.pos.y,ray.pos.z,ray.dir.x,ray.dir.y,ray.dir.z,hitInfo.didHit?"TRUE":"FALSE",hitInfo.dst,hitInfo.hitPoint.x,hitInfo.hitPoint.y,hitInfo.hitPoint.z,hitInfo.normal.x,hitInfo.normal.y,hitInfo.normal.z,hitInfo.mat.color.x,hitInfo.mat.color.y,hitInfo.mat.color.z,hitInfo.mat.emissionStrength,rayColor.x,rayColor.y,rayColor.z,incomingLight.x,incomingLight.y,incomingLight.z);
       if (hitInfo.didHit)
       {
@@ -251,11 +279,12 @@ vec3 calcColor(Ray ray, int maxBounce)
          vec3 emittedLight = times(hitInfo.mat.color, hitInfo.mat.emissionStrength);
          incomingLight = plus(incomingLight, timesVec3(emittedLight, rayColor));
          rayColor = timesVec3(rayColor, hitInfo.mat.color);
-         
-         //optimisation that statistically does not change the result
-         float p = fmax(fmax(rayColor.x,rayColor.y),rayColor.z);
-         if(p<RandomValue())break;
-         rayColor = times(rayColor,1.0/p);
+
+         // optimisation that statistically does not change the result
+         float p = fmax(fmax(rayColor.x, rayColor.y), rayColor.z);
+         if (p < RandomValue())
+            break;
+         rayColor = times(rayColor, 1.0 / p);
       }
       else
       {
