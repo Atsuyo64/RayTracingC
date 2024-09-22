@@ -20,6 +20,14 @@ typedef struct OBJTriangle
     float smoothness;
 } OBJTriangle;
 
+typedef struct OBJMat
+{
+    char name[128];
+    OBJVec3 color;
+    float emission;
+    float smoothness;
+} OBJMat;
+
 /**
  * Print OBJTriangle
  * @param triangle

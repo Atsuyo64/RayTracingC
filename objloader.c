@@ -41,6 +41,7 @@ const OBJVec3 DEFAULT_COLOR = {
 
 OBJVec3 *globalVerts;
 OBJVec3 *globalNorms;
+OBJMat *globalMats;
 
 int totalVerts = 0;
 int totalNorms = 0;
@@ -137,21 +138,19 @@ int allocateMtlMemory(const char *filename)
     {
         if (read == 1 || line[0] == '#')
             continue;
-        if (strncmp(line, "v ", 2) == 0)
-            continue;//totalVerts++;
+        if (strncmp(line, "newmtl ", 7) == 0)
+            totalMtls++;
     }
 
     fclose(fp);
     if (line)
         free(line);
-
-    // allocating max+1 because OBJ start indexing at 1
-    // globalVerts = malloc((totalVerts + 1) * sizeof(OBJVec3));
-    // globalNorms = malloc((totalNorms + 1) * sizeof(OBJVec3));
+    ;
+    globalMats = malloc((totalMtls) * sizeof(OBJMat));
 
 #if PRINT_LOADING >= 2
     // printf("\rAllocated memory: objects=%d vertices=%d bormals=%d faces=%d\n", totalObjs, totalVerts, totalNorms, totalFaces);
-    printf("\r%d materials allocated\n", totalMtls);
+    printf("\r%d materials allocated.\n", totalMtls);
 #endif
     return 0;
 }
@@ -239,14 +238,70 @@ int loadMtl(const char *filename)
         return 1;
     }
 
+    allocateMtlMemory(filename);
+
+    int matNb = -1;
+    int lineNb = 0;
     while ((read = getline(&line, &len, fp)) != -1)
     {
+        lineNb++;
 #if PRINT_LOADING > 3
         printf("Retrieved line of length %zu:\n", read);
         printf("%s", line);
 #endif
         if (read == 1 || line[0] == '#')
             continue;
+
+        if (strncmp(line, "newmtl ", 7) == 0)
+        {
+            char mtlFileName[256];
+            if (ret = sscanf(line, "newmtl %s", mtlFileName))
+            {
+                matNb++;
+                strcpy(globalMats[matNb].name, mtlFileName);
+            }
+        }
+
+        // smoothness
+        if (strncmp(line, "Ns ", 3) == 0)
+        {
+            float ns;
+            if (ret = sscanf(line, "Ns %f", &ns))
+            {
+                globalMats[matNb].smoothness = sqrt(0.001*ns);
+                // printf("VN: %d (%f, %f, %f)\n", normSaved, globalNorms[normSaved].x, globalNorms[normSaved].y, globalNorms[normSaved].z);
+            }
+            else
+            {
+                fprintf(stderr, "\n# ERROR while reading %dth Material specular (line %d)\n", (matNb+1), lineNb);
+            }
+        }
+
+        // diffuse color
+        if (strncmp(line, "Kd ", 3) == 0)
+        {
+            if (ret = sscanf(line, "Kd %f %f %f", &globalMats[matNb].color.x, &globalMats[matNb].color.y, &globalMats[matNb].color.z))
+            {
+            }
+            else
+            {
+                fprintf(stderr, "\n# ERROR while reading %dth Material diffuse color (line %d)\n", (matNb+1), lineNb);
+            }
+        }
+
+        // emissive
+        if (strncmp(line, "Ke ", 3) == 0)
+        {
+            float v2, v3;
+            if (ret = sscanf(line, "Ke %f %f %f", &globalMats[matNb].emission, &v2, &v3))
+            {
+                // printf("VN: %d (%f, %f, %f)\n", normSaved, globalNorms[normSaved].x, globalNorms[normSaved].y, globalNorms[normSaved].z);
+            }
+            else
+            {
+                fprintf(stderr, "\n# ERROR while reading %dth Material specular (line %d)\n", (matNb+1), lineNb);
+            }
+        }
     }
 
     fclose(fp);
@@ -460,6 +515,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
 #endif
     free(globalVerts);
     free(globalNorms);
+    free(globalMats);
 
     return 0;
 }
