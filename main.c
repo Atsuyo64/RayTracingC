@@ -48,7 +48,7 @@ int main(int argc, char const *argv[])
    if (argc == 1)
    {
       printf("Parsing triangles...\n");
-      parseTriangleFile("triangles.txt");
+      parseTriangleFile("debugTriangles.txt");
    }
    else if (strcmp(argv[1], "--help") == 0)
    {
@@ -62,7 +62,14 @@ int main(int argc, char const *argv[])
    }
    // printAllTriangles();
    Color image[w * h];
-   vec3 origin = {0, -1, -1};
+   vec3 origin = {0, 0, -7};
+   vec3 lookingAt = {0,0,0};
+   float fov = 1;
+   
+   vec3 ez = normalized(minus(lookingAt,origin));
+   vec3 up = {0,-1,0};
+   vec3 ex = normalized(cross(ez,up));
+   vec3 ey = normalized(cross(ez,ex));
    /*
    vec3 dir={0,0,1};
    dir=normalized(dir);
@@ -74,10 +81,13 @@ int main(int argc, char const *argv[])
 #if defined(_WIN32) || (MULTITHREADED == 0)
    for (int y = 0; y < h; ++y)
    {
+      if(y%10==0)printf("[%4i/%i] Processing...\n",y,h);
       for (int x = 0; x < w; ++x)
       {
-         vec3 dir = {(x - halfW) / (float)halfH, (y - halfH) / (float)halfH, 1}; // aspect ratio respected
-         // dir = minus(dir,origin);//fixed camera dir
+         //vec3 dir = {(x - halfW) / (float)halfH, (y - halfH) / (float)halfH, 1}; // aspect ratio respected
+         float dx = (x-halfW)/(float)halfH;
+         float dy = (y-halfH)/(float)halfH;
+         vec3 dir = plus(plus(times(ex,dx),times(ey,dy)),times(ez,fov));//dx*ex + dy*ey + fov*ez;
          dir = normalized(dir);
          Ray ray = {origin, dir};
          rngState = x + y * w;
