@@ -13,9 +13,9 @@ typedef struct ObjVert
 } ObjVert;
 typedef struct OBJTriangle
 {
-    ObjVert pos[3];
-    float normal[3];
-    float color[3];
+    ObjVert posA, posB, posC;
+    ObjVert normal;
+    ObjVert color;
     float emission;
     float smoothness;
 } OBJTriangle;

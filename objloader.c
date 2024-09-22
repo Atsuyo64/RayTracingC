@@ -55,9 +55,9 @@ int totalFaces = 0;
 void printOBJTriangle(OBJTriangle triangle)
 {
     // printf("\nTRIANGLE:\nA(%f,%f,%f) ; Y(%f,%f,%f) ; C(%f,%f,%f)\n", triangle.pos[0][0], triangle.pos[0][1], triangle.pos[0][2], triangle.pos[1][0], triangle.pos[1][1], triangle.pos[1][2], triangle.pos[2][0], triangle.pos[2][1], triangle.pos[2][2]);
-    printf("\nTRIANGLE:\nA(%f,%f,%f) ; Y(%f,%f,%f) ; C(%f,%f,%f)\n", triangle.pos[0].x, triangle.pos[0].y, triangle.pos[0].z, triangle.pos[1].x, triangle.pos[1].y, triangle.pos[1].z, triangle.pos[2].x, triangle.pos[2].y, triangle.pos[2].z);
-    printf("Normal=(%f,%f,%f)\n", triangle.normal[0], triangle.normal[1], triangle.normal[2]);
-    printf("SHADING: Color=(%f,%f,%f) emission=%f, smoothness=%f\n\n", triangle.color[0], triangle.color[1], triangle.color[2], triangle.emission, triangle.smoothness);
+    printf("\nTRIANGLE:\nA(%f,%f,%f) ; B(%f,%f,%f) ; C(%f,%f,%f)\n", triangle.posA.x, triangle.posA.y, triangle.posA.z, triangle.posB.x, triangle.posB.y, triangle.posB.z, triangle.posC.x, triangle.posC.y, triangle.posC.z);
+    printf("Normal=(%f,%f,%f)\n", triangle.normal.x, triangle.normal.y, triangle.normal.z);
+    printf("SHADING: Color=(%f,%f,%f) emission=%f, smoothness=%f\n\n", triangle.color.x, triangle.color.y, triangle.color.z, triangle.emission, triangle.smoothness);
 }
 
 /**
@@ -344,12 +344,14 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
                 // OBJTriangle t = {0};
                 // t.smoothness = .5;
                 printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
-                // printf("");
-                memcpy(&triangles[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(ObjVert));
-                memcpy(&triangles[numberOfTriangles]->pos[0], &globalVerts[av], sizeof(ObjVert));
-                memcpy(&triangles[numberOfTriangles]->pos[2], &globalVerts[bv], sizeof(ObjVert));
-                memcpy(&triangles[numberOfTriangles]->pos[3], &globalVerts[cv], sizeof(ObjVert));
+                printf("B: %f, %f, %f\n", globalVerts[bv].x, globalVerts[bv].y, globalVerts[bv].z);
+                memcpy(&triangles[numberOfTriangles]->posA, &globalVerts[av], sizeof(ObjVert));
+                memcpy(&triangles[numberOfTriangles]->posB, &globalVerts[bv], sizeof(ObjVert));
+
+                memcpy(&triangles[numberOfTriangles]->posC, &globalVerts[cv], sizeof(ObjVert));
                 memcpy(&triangles[numberOfTriangles]->normal, &globalNorms[an], sizeof(ObjVert));
+
+                memcpy(&triangles[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(ObjVert));
                 triangles[numberOfTriangles]->emission = 0;
                 triangles[numberOfTriangles]->smoothness = 0.5;
                 // memcpy(triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
@@ -383,6 +385,7 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
         free(line);
 
     printf("CONNARD: %f\n", triangles[0]->smoothness);
+    printOBJTriangle(*triangles[0]);
 
 #if PRINT_LOADING >= 2
     printf("\nFile reading ended.\n");
