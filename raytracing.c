@@ -148,15 +148,15 @@ void loadOBJTriangles(char const *filename)
 
 /* RAYS */
 
-vec3 getEnvironmentLight(Ray ray)
+vec3 getEnvironmentLight(Ray ray, Scene s)
 {
    float skyGradientT = powf(smoothstep(0, .74, -ray.dir.y), .35);
-   vec3 skyGradient = lerp(SkyColorHorizon, SkyColorZenith, skyGradientT);
-   float sun = powf(fmax(0, dot(ray.dir, normalizedSunDirection)), SunFocus) * SunIntensity;
+   vec3 skyGradient = lerp(s.skyColorZenith, s.skyColorZenith, skyGradientT);
+   float sun = powf(fmax(0, dot(ray.dir, s.normalizedSunDirection)), s.sunFocus) * s.sunIntensity;
    float groundToSkyT = smoothstep(-0.01, 0, -ray.dir.y);
    float sunMask = ray.dir.y < 0;
    vec3 sunValue = {sun * sunMask, sun * sunMask, sun * sunMask};
-   return plus(lerp(GroundColor, skyGradient, groundToSkyT), sunValue);
+   return plus(lerp(s.groundColor, skyGradient, groundToSkyT), sunValue);
 }
 
 HitInfo raySphere(Ray ray, vec3 sphereCentre, float radius)
@@ -239,7 +239,7 @@ HitInfo calculateRayCollision(Ray ray, int trianglesOnly)
    return closest;
 }
 
-vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce)
+vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce, Scene s)
 {
    int i;
    for (i = 0; i < maxBounce; ++i)
@@ -259,7 +259,7 @@ vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce)
    return lerp(BLACK, WHITE, i / (float)maxBounce);
 }
 
-vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce)
+vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce, Scene s)
 {
    // Color skyColor={0x77,0xB5,0xFE};
    vec3 incomingLight = {0, 0, 0};
@@ -288,7 +288,7 @@ vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce)
       }
       else
       {
-         incomingLight = plus(incomingLight, timesVec3(getEnvironmentLight(ray), rayColor));
+         incomingLight = plus(incomingLight, timesVec3(getEnvironmentLight(ray, s), rayColor));
          break;
       }
    }

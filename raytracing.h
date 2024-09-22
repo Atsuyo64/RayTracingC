@@ -4,6 +4,12 @@
 #include <math.h>
 #include "moremath.h"
 
+typedef struct Scene
+{
+    vec3 normalizedSunDirection, skyColorHorizon, skyColorZenith, groundColor;
+    float sunFocus, sunIntensity;
+} Scene;
+
 /* COLORS & MATERIALS */
 
 typedef struct Color
@@ -62,9 +68,9 @@ typedef struct Ray
    vec3 dir;
 } Ray;
 
-vec3 getEnvironmentLight(Ray ray);
+vec3 getEnvironmentLight(Ray ray, Scene s);
 HitInfo raySphere(Ray ray, vec3 sphereCentre, float radius);
 HitInfo rayTriangle(Ray ray, Triangle t);
 HitInfo calculateRayCollision(Ray ray, int trianglesOnly);
-vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce);
-vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce);
+vec3 calcDebugColor(Ray ray, int trianglesOnly, int maxBounce, Scene s);
+vec3 calcColor(Ray ray, int trianglesOnly, int maxBounce, Scene s);

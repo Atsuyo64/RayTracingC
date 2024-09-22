@@ -10,7 +10,22 @@
 int width = 128;
 int height = 128;
 int maxBounce = 10;
-vec3 sunDirection = {-30,-85,100};
+
+vec3 sunDirection = {-30, -85, 100};
+vec3 skyColorHorizon = {1, 1, 1};
+vec3 skyColorZenith = {0.263, 0.969, 0.871};
+vec3 groundColor;// = {.66, .66, .66};
+float sunFocus = 22;
+float sunIntensity = .75;
+vec3 normalizedSunDirection;
+Scene scene = {
+   // normalizedSunDirection
+   {0,0,0},
+   // skyColorHorizon, skyColorZenith, groundColor
+   {1, 1, 1}, {0.263, 0.969, 0.871}, {.66, .66, .66},
+   // sunFocus, sunIntensity
+   22, .75
+};
 
 typedef struct threadArgs
 {
@@ -32,7 +47,17 @@ typedef struct threadArgs
 void printHelp4(char const *progName, char const *errorDescription, char const *precision, char const *afterPrecision)
 {
    fprintf(stderr, "%s%s%s", errorDescription, precision, afterPrecision);
-   printf("%s [-h|--help]\n\t[-i|--input path/to/file.obj]\n\t[-p|--pos <posX> <posY> <posZ>]\n\t[-t|--track <trackX> <trackY> <trackZ>]\n\t[-f|--fov <fov>]\n\t[-s|--size <width> <height>]\n\t[-o|--output <filename>]\n", progName);
+   printf("%s [-h|--help]\
+   \n   # FILE SETTINGS\
+   \n\t[-i|--input path/to/file.obj]\n\t[-o|--output <filename>]\
+   \n   # POSITION & LOOKING-AT POSITION (TRACK)\
+   \n\t[-p|--pos <posX> <posY> <posZ>]\n\t[-t|--track <trackX> <trackY> <trackZ>]\
+   \n   # CAMERA SETTINGS\
+   \n\t[-f|--fov <fov>]\n\t[-s|--size <width> <height>]\n\t[-b|--max-bounce <maxBounce>]\
+   \n   # SCENE SETTINGS\
+   \n\t[-gc|--ground-color <R> <G> <B>]\n\t[-gc|--ground-color <R> <G> <B>]\
+   \n",
+          progName);
    exit(0);
 }
 
@@ -67,8 +92,9 @@ void *rowThread(void *thArgsPtr)
          Ray ray = {*(thArgs->origin), dir};
          rngState = x + y * width;
          vec3 accumulatedColor = {0, 0, 0};
+
          for (int i = 0; i < accumulationCount; ++i)
-            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, thArgs->trianglesOnly, maxBounce), 1. / accumulationCount));
+            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, thArgs->trianglesOnly, maxBounce, scene), 1. / accumulationCount));
          thArgs->image[x + y * width] = vec3ToColor(accumulatedColor);
       }
    }
@@ -92,6 +118,24 @@ int main(int argc, char const *argv[])
    {
       if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
          printHelp1(argv[0]);
+
+      // FILE SETTINGS
+      else if (strcmp(argv[i], "--input") == 0 || strcmp(argv[i], "-i") == 0)
+      {
+         if (argc - 1 < i + 1)
+            printHelp2(argv[0], "ERROR: --input/-i takes 1 more param (string path/to/filename.obj)\n");
+         strcpy(mode, argv[i + 1]);
+         i += 1;
+      }
+      else if (strcmp(argv[i], "--output") == 0 || strcmp(argv[i], "-o") == 0)
+      {
+         if (argc - 1 < i + 1)
+            printHelp2(argv[0], "ERROR: --output/-o takes 1 more param (string outImage.bmp)\n");
+         strcpy(outputFileName, argv[i + 1]);
+         i += 1;
+      }
+
+      // POSITIONS
       else if (strcmp(argv[i], "--pos") == 0 || strcmp(argv[i], "-p") == 0)
       {
          if (argc - 1 < i + 3)
@@ -110,11 +154,20 @@ int main(int argc, char const *argv[])
          lookingAt.z = atof(argv[i + 3]);
          i += 3;
       }
+
+      // CAMERA SETTINGS
       else if (strcmp(argv[i], "--fov") == 0 || strcmp(argv[i], "-f") == 0)
       {
          if (argc - 1 < i + 1)
             printHelp2(argv[0], "ERROR: --fov/-i takes 1 more param (float f)\n");
          fov = atof(argv[i + 1]);
+         i += 1;
+      }
+      else if (strcmp(argv[i], "--max-bounce") == 0 || strcmp(argv[i], "-b") == 0)
+      {
+         if (argc - 1 < i + 1)
+            printHelp2(argv[0], "ERROR: --max-bounce/-b takes 1 more param (int f)\n");
+         maxBounce = atoi(argv[i + 1]);
          i += 1;
       }
       else if (strcmp(argv[i], "--size") == 0 || strcmp(argv[i], "-s") == 0)
@@ -125,20 +178,8 @@ int main(int argc, char const *argv[])
          height = atoi(argv[i + 2]);
          i += 2;
       }
-      else if (strcmp(argv[i], "--input") == 0 || strcmp(argv[i], "-i") == 0)
-      {
-         if (argc - 1 < i + 1)
-            printHelp2(argv[0], "ERROR: --input/-i takes 1 more param (string path/to/filename.obj)\n");
-         strcpy(mode, argv[i + 1]);
-         i += 1;
-      }
-      else if (strcmp(argv[i], "--output") == 0 || strcmp(argv[i], "-o") == 0)
-      {
-         if (argc - 1 < i + 1)
-            printHelp2(argv[0], "ERROR: --output/-o takes 1 more param (string outImage.bmp)\n");
-         strcpy(outputFileName, argv[i + 1]);
-         i += 1;
-      }
+
+      // THROW ERROR
       else
       {
          printHelp4(argv[0], "ERROR: UNKNOWN ARGUMENT \"", argv[i], "\"\n");
