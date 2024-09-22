@@ -4,9 +4,16 @@
 #include <math.h>
 #include <string.h>
 
+
+typedef struct ObjVert
+{
+    float x;
+    float y;
+    float z;
+} ObjVert;
 typedef struct OBJTriangle
 {
-    float pos[3][3];
+    ObjVert pos[3];
     float normal[3];
     float color[3];
     float emission;
@@ -27,7 +34,7 @@ void printOBJTriangle(OBJTriangle triangle);
  * 
  * frees array of Triangles
  */
-void objTriangleArrayFree(OBJTriangle *triangles, int count);
+void objTriangleArrayFree(OBJTriangle **triangles, int count);
 
 /**
  * loadObj function

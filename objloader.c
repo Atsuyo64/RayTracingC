@@ -33,13 +33,6 @@ enum reading_stage
     RS_FACE
 };
 
-typedef struct ObjVert
-{
-    float x;
-    float y;
-    float z;
-} ObjVert;
-
 const ObjVert DEFAULT_COLOR = {
     1.,
     1.,
@@ -61,7 +54,8 @@ int totalFaces = 0;
  */
 void printOBJTriangle(OBJTriangle triangle)
 {
-    printf("\nTRIANGLE:\nA(%f,%f,%f) ; Y(%f,%f,%f) ; C(%f,%f,%f)\n", triangle.pos[0][0], triangle.pos[0][1], triangle.pos[0][2], triangle.pos[1][0], triangle.pos[1][1], triangle.pos[1][2], triangle.pos[2][0], triangle.pos[2][1], triangle.pos[2][2]);
+    // printf("\nTRIANGLE:\nA(%f,%f,%f) ; Y(%f,%f,%f) ; C(%f,%f,%f)\n", triangle.pos[0][0], triangle.pos[0][1], triangle.pos[0][2], triangle.pos[1][0], triangle.pos[1][1], triangle.pos[1][2], triangle.pos[2][0], triangle.pos[2][1], triangle.pos[2][2]);
+    printf("\nTRIANGLE:\nA(%f,%f,%f) ; Y(%f,%f,%f) ; C(%f,%f,%f)\n", triangle.pos[0].x, triangle.pos[0].y, triangle.pos[0].z, triangle.pos[1].x, triangle.pos[1].y, triangle.pos[1].z, triangle.pos[2].x, triangle.pos[2].y, triangle.pos[2].z);
     printf("Normal=(%f,%f,%f)\n", triangle.normal[0], triangle.normal[1], triangle.normal[2]);
     printf("SHADING: Color=(%f,%f,%f) emission=%f, smoothness=%f\n\n", triangle.color[0], triangle.color[1], triangle.color[2], triangle.emission, triangle.smoothness);
 }
@@ -201,13 +195,13 @@ int loadMtl(const char *filename)
  *
  * frees array of Triangles
  */
-void objTriangleArrayFree(OBJTriangle *triangles, int count)
+void objTriangleArrayFree(OBJTriangle **triangles, int count)
 {
-    // for (size_t i = 0; i < count; i++)
-    // {
-    //     free(&triangles[i]);
-    // }
-    // free(triangles);
+    for (size_t i = 0; i < count; i++)
+    {
+        free(triangles[i]);
+    }
+    //free(triangles);
 }
 
 /**
@@ -248,7 +242,7 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
     allocateMemory(filename);
     // list allocation
     // triangles = malloc((totalFaces) * sizeof(OBJTriangle));
-    triangles = malloc((totalFaces) * sizeof(OBJTriangle *));
+    *triangles = malloc((totalFaces) * sizeof(OBJTriangle *));
     for (size_t i = 0; i < totalFaces; i++)
     {
         triangles[i] = malloc(sizeof(OBJTriangle));
@@ -299,6 +293,8 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
             char objectName[256];
             if (ret = sscanf(line, "o %s", objectName))
             {
+                vertPerObject = 0;
+                normPerObject = 0;
 #if PRINT_LOADING >= 2
                 printf("\nNEW OBJECT: %s\n", objectName);
 #endif
@@ -313,6 +309,7 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
             vertPerObject++;
             if (ret = sscanf(line, "v %f %f %f", &globalVerts[vertPerObject].x, &globalVerts[vertPerObject].y, &globalVerts[vertPerObject].z))
             {
+                printf("V: %d (%f, %f, %f)\n", vertPerObject , globalVerts[vertPerObject].x, globalVerts[vertPerObject].y, globalVerts[vertPerObject].z);
             }
             else
             {
@@ -328,6 +325,7 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
             normPerObject++;
             if (ret = sscanf(line, "vn %f %f %f", &globalNorms[normPerObject].x, &globalNorms[normPerObject].y, &globalNorms[normPerObject].z))
             {
+                printf("VN: %d (%f, %f, %f)\n", normPerObject, globalNorms[normPerObject].x, globalNorms[normPerObject].y, globalNorms[normPerObject].z);
             }
             else
             {
@@ -343,36 +341,40 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
             newState = RS_FACE;
             if (ret = sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", &av, &at, &an, &bv, &bt, &bn, &cv, &ct, &cn))
             {
-                OBJTriangle t = {0};
-                t.smoothness = .5;
-                memcpy(&t.color, &DEFAULT_COLOR, sizeof(ObjVert));
-                memcpy(&t.pos[0], &globalNorms[av], sizeof(ObjVert));
-                memcpy(&t.pos[2], &globalNorms[bv], sizeof(ObjVert));
-                memcpy(&t.pos[3], &globalNorms[cv], sizeof(ObjVert));
-                memcpy(&t.normal, &globalNorms[an], sizeof(ObjVert));
-                memcpy(triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
-                printf("\nHAY: %f\n", t.smoothness);
-                printf("\nHEY: %f\n", triangles[numberOfTriangles]->pos[0][0]);
+                // OBJTriangle t = {0};
+                // t.smoothness = .5;
+                printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
+                // printf("");
+                memcpy(&triangles[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(ObjVert));
+                memcpy(&triangles[numberOfTriangles]->pos[0], &globalVerts[av], sizeof(ObjVert));
+                memcpy(&triangles[numberOfTriangles]->pos[2], &globalVerts[bv], sizeof(ObjVert));
+                memcpy(&triangles[numberOfTriangles]->pos[3], &globalVerts[cv], sizeof(ObjVert));
+                memcpy(&triangles[numberOfTriangles]->normal, &globalNorms[an], sizeof(ObjVert));
+                triangles[numberOfTriangles]->emission = 0;
+                triangles[numberOfTriangles]->smoothness = 0.5;
+                // memcpy(triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
+                // printf("\nHAY: %f\n", t.smoothness);
+                // printf("\nHEY: %f\n", triangles[numberOfTriangles]->pos[0][0]);
                 printOBJTriangle(*triangles[numberOfTriangles]);
             }
             else if (ret = sscanf(line, "f %d//%d %d//%d %d//%d", &av, &an, &bv, &bn, &cv, &cn))
             {
-                OBJTriangle t = {0};
-                t.smoothness = .5;
-                memcpy(&t.color, &DEFAULT_COLOR, sizeof(ObjVert));
-                memcpy(&t.pos[0], &globalNorms[av], sizeof(ObjVert));
-                memcpy(&t.pos[2], &globalNorms[bv], sizeof(ObjVert));
-                memcpy(&t.pos[3], &globalNorms[cv], sizeof(ObjVert));
-                memcpy(&t.normal, &globalNorms[an], sizeof(ObjVert));
-                memcpy(&triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
+                fprintf(stderr, "\n# ERROR while reading %dth triangle (line %d)\n", numberOfTriangles, lineNb);
+                exit(69);
+                // OBJTriangle t = {0};
+                // t.smoothness = .5;
+                // memcpy(&t.color, &DEFAULT_COLOR, sizeof(ObjVert));
+                // memcpy(&t.pos[0], &globalNorms[av], sizeof(ObjVert));
+                // memcpy(&t.pos[2], &globalNorms[bv], sizeof(ObjVert));
+                // memcpy(&t.pos[3], &globalNorms[cv], sizeof(ObjVert));
+                // memcpy(&t.normal, &globalNorms[an], sizeof(ObjVert));
+                // memcpy(&triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
             }
             else
             {
                 fprintf(stderr, "\n# ERROR while reading %dth triangle (line %d)\n", numberOfTriangles, lineNb);
             }
             numberOfTriangles++;
-            vertPerObject = 0;
-            normPerObject = 0;
         }
     }
 
@@ -385,8 +387,8 @@ int loadObj(const char *filename, OBJTriangle **triangles, int *count)
 #if PRINT_LOADING >= 2
     printf("\nFile reading ended.\n");
 #endif
-    free(globalVerts);
-    free(globalNorms);
+    // free(globalVerts);
+    // free(globalNorms);
 
     return 0;
 }
