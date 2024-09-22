@@ -16,9 +16,11 @@ typedef struct threadArgs
    int trianglesOnly;
    vec3 *origin;
    Color *image;
+   vec3 ex, ey, ez;
+   float fov;
 } threadArgs;
 
-#define MULTITHREADED 0
+#define MULTITHREADED 1
 #if !defined(_WIN32) && (MULTITHREADED == 1)
 #include <pthread.h>
 #define NUMBER_OF_THREADS 12
@@ -30,7 +32,10 @@ void *rowThread(void *thArgsPtr)
    {
       for (int x = 0; x < width; ++x)
       {
-         vec3 dir = {(x - width / 2) / (float)(height / 2), (y - (height / 2)) / (float)(height / 2), 1}; // aspect ratio respected
+         float dx = (x-width / 2)/(float)(height / 2);
+         float dy = (y-(height / 2))/(float)(height / 2);
+         vec3 dir = plus(plus(times(thArgs->ex,dx),times(thArgs->ey,dy)),times(thArgs->ez,thArgs->fov));
+         // vec3 dir = {(x - width / 2) / (float)(height / 2), (y - (height / 2)) / (float)(height / 2), 1}; // aspect ratio respected
          // dir = minus(dir,origin);//fixed camera dir
          dir = normalized(dir);
          Ray ray = {*(thArgs->origin), dir};
@@ -130,6 +135,10 @@ int main(int argc, char const *argv[])
       args->origin = &origin;
       args->image = image;
       args->trianglesOnly = trianglesOnly;
+      args->ex = ex;
+      args->ey = ey;
+      args->ez = ez;
+      args->fov = fov;
       pthread_create(&tIDs[i], NULL, rowThread, args);
    }
    for (int i = 0; i < NUMBER_OF_THREADS; i++)
