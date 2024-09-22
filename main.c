@@ -7,6 +7,9 @@
 #include "raytracing.h"
 #include "scene.h"
 
+int width = 128;
+int height = 128;
+
 typedef struct threadArgs
 {
    int thID;
@@ -15,7 +18,7 @@ typedef struct threadArgs
    Color *image;
 } threadArgs;
 
-#define MULTITHREADED 1
+#define MULTITHREADED 0
 #if !defined(_WIN32) && (MULTITHREADED == 1)
 #include <pthread.h>
 #define NUMBER_OF_THREADS 12
@@ -23,19 +26,19 @@ typedef struct threadArgs
 void *rowThread(void *thArgsPtr)
 {
    threadArgs *thArgs = (threadArgs *)thArgsPtr;
-   for (int y = thArgs->thID; y < h; y += NUMBER_OF_THREADS)
+   for (int y = thArgs->thID; y < height; y += NUMBER_OF_THREADS)
    {
-      for (int x = 0; x < w; ++x)
+      for (int x = 0; x < width; ++x)
       {
-         vec3 dir = {(x - halfW) / (float)halfH, (y - halfH) / (float)halfH, 1}; // aspect ratio respected
+         vec3 dir = {(x - width / 2) / (float)(height / 2), (y - (height / 2)) / (float)(height / 2), 1}; // aspect ratio respected
          // dir = minus(dir,origin);//fixed camera dir
          dir = normalized(dir);
          Ray ray = {*(thArgs->origin), dir};
-         rngState = x + y * w;
+         rngState = x + y * width;
          vec3 accumulatedColor = {0, 0, 0};
          for (int i = 0; i < accumulationCount; ++i)
             accumulatedColor = plus(accumulatedColor, times(calcColor(ray, thArgs->trianglesOnly, maxBounce), 1. / accumulationCount));
-         thArgs->image[x + y * w] = vec3ToColor(accumulatedColor);
+         thArgs->image[x + y * width] = vec3ToColor(accumulatedColor);
       }
    }
    free(thArgs);
@@ -46,10 +49,10 @@ int main(int argc, char const *argv[])
 {
    int trianglesOnly = 0;
    normalizedSunDirection = normalized(sunDirection);
-   if (argc < 2 || strcmp(argv[1], "--help") == 0)
+   if (argc < 2 || strcmp(argv[1], "--help") == 0 || (argc != 2 && argc != 5 && argc != 8 && argc != 9 && argc != 11))
    {
       printf("%s needs at least one param.\n", argv[0]);
-      printf("%s <default|path/to/file.obj> [posX posY posZ] [trackX trackY trackZ].\n", argv[0]);
+      printf("%s <default|path/to/file.obj> [posX posY posZ] [trackX trackY trackZ] [fov] [width height].\n", argv[0]);
       exit(0);
    }
    else if (strcmp(argv[1], "default") == 0) {
@@ -63,10 +66,29 @@ int main(int argc, char const *argv[])
       loadOBJTriangles(argv[1]);
    }
    // printAllTriangles();
-   Color image[w * h];
    vec3 origin = {-4.75, -1.5, -4.75};
+   if (argc >= 5) {
+      origin.x = atof(argv[2]);
+      origin.y = atof(argv[3]);
+      origin.z = atof(argv[4]);
+   }
+
    vec3 lookingAt = {0.9,-1.2,1};
+   if (argc >= 8) {
+      lookingAt.x = atof(argv[5]);
+      lookingAt.y = atof(argv[6]);
+      lookingAt.z = atof(argv[7]);
+   }
    float fov = 1;
+   if (argc >= 9) {
+      fov = atof(argv[8]);
+   }
+   if (argc >= 11) {
+      width = atoi(argv[9]);
+      height = atoi(argv[10]);
+   }
+
+   Color image[width * height];
    
    vec3 ez = normalized(minus(lookingAt,origin));
    vec3 up = {0,-1,0};
@@ -81,22 +103,22 @@ int main(int argc, char const *argv[])
    */
 
 #if defined(_WIN32) || (MULTITHREADED == 0)
-   for (int y = 0; y < h; ++y)
+   for (int y = 0; y < height; ++y)
    {
-      if(y%10==0)printf("[%4i/%i] Processing...\n",y,h);
-      for (int x = 0; x < w; ++x)
+      if(y%10==0)printf("[%4i/%i] Processing...\n",y,height);
+      for (int x = 0; x < width; ++x)
       {
-         //vec3 dir = {(x - halfW) / (float)halfH, (y - halfH) / (float)halfH, 1}; // aspect ratio respected
-         float dx = (x-halfW)/(float)halfH;
-         float dy = (y-halfH)/(float)halfH;
+         //vec3 dir = {(x - width / 2) / (float)(height / 2), (y - (height / 2)) / (float)(height / 2), 1}; // aspect ratio respected
+         float dx = (x-width / 2)/(float)(height / 2);
+         float dy = (y-(height / 2))/(float)(height / 2);
          vec3 dir = plus(plus(times(ex,dx),times(ey,dy)),times(ez,fov));//dx*ex + dy*ey + fov*ez;
          dir = normalized(dir);
          Ray ray = {origin, dir};
-         rngState = x + y * w;
+         rngState = x + y * width;
          vec3 accumulatedColor = {0, 0, 0};
          for (int i = 0; i < accumulationCount; ++i)
             accumulatedColor = plus(accumulatedColor, times(calcColor(ray, trianglesOnly, maxBounce), 1. / accumulationCount));
-         image[x + y * w] = vec3ToColor(accumulatedColor);
+         image[x + y * width] = vec3ToColor(accumulatedColor);
       }
    }
 #else
@@ -116,7 +138,7 @@ int main(int argc, char const *argv[])
    }
 
 #endif
-   stbi_write_bmp("out.bmp", w, h, 3, (void const *)image);
+   stbi_write_bmp("out.bmp", width, height, 3, (void const *)image);
 
    return 0;
 }

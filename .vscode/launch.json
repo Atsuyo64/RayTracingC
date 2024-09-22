@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/rayt.out",
             "args": [
-                "3Dmodels/simple.obj"
+                // "3Dmodels/simple.obj"
+                "default"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
