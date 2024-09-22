@@ -5,17 +5,17 @@
 #include <string.h>
 
 
-typedef struct ObjVert
+typedef struct OBJVec3
 {
     float x;
     float y;
     float z;
-} ObjVert;
+} OBJVec3;
 typedef struct OBJTriangle
 {
-    ObjVert posA, posB, posC;
-    ObjVert normal;
-    ObjVert color;
+    OBJVec3 posA, posB, posC;
+    OBJVec3 normal;
+    OBJVec3 color;
     float emission;
     float smoothness;
 } OBJTriangle;

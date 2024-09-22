@@ -33,19 +33,20 @@ enum reading_stage
     RS_FACE
 };
 
-const ObjVert DEFAULT_COLOR = {
+const OBJVec3 DEFAULT_COLOR = {
     1.,
     1.,
     1.,
 };
 
-ObjVert *globalVerts;
-ObjVert *globalNorms;
+OBJVec3 *globalVerts;
+OBJVec3 *globalNorms;
 
 int totalVerts = 0;
 int totalNorms = 0;
 int totalFaces = 0;
 int totalObjs = 0;
+int totalMtls = 0;
 
 #ifdef _WIN32
 // getline is POSIX-only so we have to make our own
@@ -108,14 +109,14 @@ void printOBJTriangle(OBJTriangle triangle)
 }
 
 /**
- * Allocate Memory
+ * Allocate Memory for material
  * @param filename
  *
  */
-int allocateMemory(const char *filename)
+int allocateMtlMemory(const char *filename)
 {
 #if PRINT_LOADING >= 2
-    printf("Allocating memory...");
+    printf("Allocating materials memory...");
     fflush(stdout);
 #endif
     FILE *fp;
@@ -127,7 +128,55 @@ int allocateMemory(const char *filename)
     if (fp == NULL)
     {
 #if PRINT_LOADING > 0
-        printf("ERROR: could not evaluate memory allocation.\n");
+        printf(" ERROR: could not evaluate memory allocation.\n");
+#endif
+        exit(1);
+    }
+    totalMtls = 0;
+    while ((read = getline(&line, &len, fp)) != -1)
+    {
+        if (read == 1 || line[0] == '#')
+            continue;
+        if (strncmp(line, "v ", 2) == 0)
+            continue;//totalVerts++;
+    }
+
+    fclose(fp);
+    if (line)
+        free(line);
+
+    // allocating max+1 because OBJ start indexing at 1
+    // globalVerts = malloc((totalVerts + 1) * sizeof(OBJVec3));
+    // globalNorms = malloc((totalNorms + 1) * sizeof(OBJVec3));
+
+#if PRINT_LOADING >= 2
+    // printf("\rAllocated memory: objects=%d vertices=%d bormals=%d faces=%d\n", totalObjs, totalVerts, totalNorms, totalFaces);
+    printf("\r%d materials allocated\n", totalMtls);
+#endif
+    return 0;
+}
+
+/**
+ * Allocate Memory for vertices norms & faces
+ * @param filename
+ *
+ */
+int allocateObjMemory(const char *filename)
+{
+#if PRINT_LOADING >= 2
+    printf("Allocating geometry memory...");
+    fflush(stdout);
+#endif
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    fp = fopen(filename, "r");
+    if (fp == NULL)
+    {
+#if PRINT_LOADING > 0
+        printf(" ERROR: could not evaluate memory allocation.\n");
 #endif
         exit(1);
     }
@@ -154,8 +203,8 @@ int allocateMemory(const char *filename)
         free(line);
 
     // allocating max+1 because OBJ start indexing at 1
-    globalVerts = malloc((totalVerts + 1) * sizeof(ObjVert));
-    globalNorms = malloc((totalNorms + 1) * sizeof(ObjVert));
+    globalVerts = malloc((totalVerts + 1) * sizeof(OBJVec3));
+    globalNorms = malloc((totalNorms + 1) * sizeof(OBJVec3));
 
 #if PRINT_LOADING >= 2
     printf("\rAllocated memory: objects=%d vertices=%d bormals=%d faces=%d\n", totalObjs, totalVerts, totalNorms, totalFaces);
@@ -257,7 +306,7 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
     if (fp == NULL)
         return 1;
 
-    allocateMemory(filename);
+    allocateObjMemory(filename);
     // list allocation
     // triangles = malloc((totalFaces) * sizeof(OBJTriangle));
     (*triangles) = malloc((totalFaces) * sizeof(OBJTriangle *));
@@ -367,13 +416,13 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
                 printf("f %d/%d/%d\n", av, bv, cv);
                 // printf("av=%d, at=%d, an=%d, bv=%d, bt=%d, bn=%d, cv=%d, ct=%d, cn=%d\n", av, at, an, bv, bt, bn, cv, ct, cn);
                 // printf("B: %f, %f, %f\n", globalVerts[bv].x, globalVerts[bv].y, globalVerts[bv].z);
-                memcpy(&(*triangles)[numberOfTriangles]->posA, &globalVerts[av], sizeof(ObjVert));
-                memcpy(&(*triangles)[numberOfTriangles]->posB, &globalVerts[bv], sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->posA, &globalVerts[av], sizeof(OBJVec3));
+                memcpy(&(*triangles)[numberOfTriangles]->posB, &globalVerts[bv], sizeof(OBJVec3));
 
-                memcpy(&(*triangles)[numberOfTriangles]->posC, &globalVerts[cv], sizeof(ObjVert));
-                memcpy(&(*triangles)[numberOfTriangles]->normal, &globalNorms[an], sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->posC, &globalVerts[cv], sizeof(OBJVec3));
+                memcpy(&(*triangles)[numberOfTriangles]->normal, &globalNorms[an], sizeof(OBJVec3));
 
-                memcpy(&(*triangles)[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(ObjVert));
+                memcpy(&(*triangles)[numberOfTriangles]->color, &DEFAULT_COLOR, sizeof(OBJVec3));
                 (*triangles)[numberOfTriangles]->emission = 0;
                 (*triangles)[numberOfTriangles]->smoothness = 0;
                 // memcpy(triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
@@ -387,11 +436,11 @@ int loadObj(const char *filename, OBJTriangle ***triangles, int *count)
                 exit(69);
                 // OBJTriangle t = {0};
                 // t.smoothness = .5;
-                // memcpy(&t.color, &DEFAULT_COLOR, sizeof(ObjVert));
-                // memcpy(&t.pos[0], &globalNorms[av], sizeof(ObjVert));
-                // memcpy(&t.pos[2], &globalNorms[bv], sizeof(ObjVert));
-                // memcpy(&t.pos[3], &globalNorms[cv], sizeof(ObjVert));
-                // memcpy(&t.normal, &globalNorms[an], sizeof(ObjVert));
+                // memcpy(&t.color, &DEFAULT_COLOR, sizeof(OBJVec3));
+                // memcpy(&t.pos[0], &globalNorms[av], sizeof(OBJVec3));
+                // memcpy(&t.pos[2], &globalNorms[bv], sizeof(OBJVec3));
+                // memcpy(&t.pos[3], &globalNorms[cv], sizeof(OBJVec3));
+                // memcpy(&t.normal, &globalNorms[an], sizeof(OBJVec3));
                 // memcpy(&triangles[numberOfTriangles], &t, sizeof(OBJTriangle));
             }
             else
