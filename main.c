@@ -10,10 +10,10 @@
 typedef struct threadArgs
 {
    int thID;
+   int trianglesOnly;
    vec3 *origin;
    Color *image;
 } threadArgs;
-
 
 #define MULTITHREADED 1
 #if !defined(_WIN32) && (MULTITHREADED == 1)
@@ -34,7 +34,7 @@ void *rowThread(void *thArgsPtr)
          rngState = x + y * w;
          vec3 accumulatedColor = {0, 0, 0};
          for (int i = 0; i < accumulationCount; ++i)
-            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, maxBounce), 1. / accumulationCount));
+            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, thArgs->trianglesOnly, maxBounce), 1. / accumulationCount));
          thArgs->image[x + y * w] = vec3ToColor(accumulatedColor);
       }
    }
@@ -44,6 +44,7 @@ void *rowThread(void *thArgsPtr)
 
 int main(int argc, char const *argv[])
 {
+   int trianglesOnly = 0;
    normalizedSunDirection = normalized(sunDirection);
    if (argc == 1)
    {
@@ -57,6 +58,7 @@ int main(int argc, char const *argv[])
    }
    else
    {
+      trianglesOnly = 1;
       printf("Loading obj...\n");
       loadOBJTriangles(argv[1]);
    }
@@ -93,7 +95,7 @@ int main(int argc, char const *argv[])
          rngState = x + y * w;
          vec3 accumulatedColor = {0, 0, 0};
          for (int i = 0; i < accumulationCount; ++i)
-            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, maxBounce), 1. / accumulationCount));
+            accumulatedColor = plus(accumulatedColor, times(calcColor(ray, trianglesOnly, maxBounce), 1. / accumulationCount));
          image[x + y * w] = vec3ToColor(accumulatedColor);
       }
    }
@@ -105,6 +107,7 @@ int main(int argc, char const *argv[])
       args->thID = i;
       args->origin = &origin;
       args->image = image;
+      args->trianglesOnly = trianglesOnly;
       pthread_create(&tIDs[i], NULL, rowThread, args);
    }
    for (int i = 0; i < NUMBER_OF_THREADS; i++)

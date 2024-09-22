@@ -5,3 +5,4 @@ out.bmp
 *.parsed
 build/
 *.h.gch
+out.bmp
