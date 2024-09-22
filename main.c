@@ -48,7 +48,7 @@ int main(int argc, char const *argv[])
    if (argc == 1)
    {
       printf("Parsing triangles...\n");
-      parseTriangleFile("debugTriangles.txt");
+      parseTriangleFile("triangles.txt");
    }
    else if (strcmp(argv[1], "--help") == 0)
    {
@@ -62,8 +62,8 @@ int main(int argc, char const *argv[])
    }
    // printAllTriangles();
    Color image[w * h];
-   vec3 origin = {0, 0, -7};
-   vec3 lookingAt = {0,0,0};
+   vec3 origin = {-4.75, -1.5, -4.75};
+   vec3 lookingAt = {0.9,-1.2,1};
    float fov = 1;
    
    vec3 ez = normalized(minus(lookingAt,origin));
